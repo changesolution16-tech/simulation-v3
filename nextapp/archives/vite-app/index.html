@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Soft Skills Training Simulation - Moodle Plugin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (function() {
+        window.addEventListener('error', function(e) {
+          if (e.message && (
+            e.message.includes('analytics.tiktok.com') ||
+            e.message.includes('ERR_NAME_NOT_RESOLVED') ||
+            e.message.includes('Failed to fetch')
+          )) {
+            e.preventDefault();
+            console.warn('External analytics service unavailable:', e.message);
+            return true;
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function(e) {
+          if (e.reason && (
+            String(e.reason).includes('analytics.tiktok.com') ||
+            String(e.reason).includes('Failed to fetch')
+          )) {
+            e.preventDefault();
+            console.warn('Analytics promise rejection suppressed:', e.reason);
+            return true;
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

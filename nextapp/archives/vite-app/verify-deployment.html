@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deployment Verification Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .check-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+        }
+        .check-item.pass {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        .check-item.fail {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+        .check-item.warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+        .icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        .check-content {
+            flex: 1;
+        }
+        .check-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .check-detail {
+            font-size: 13px;
+            color: #666;
+            font-family: 'Courier New', monospace;
+        }
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #5568d3;
+        }
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+        .instructions h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .instructions code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .score {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 48px;
+            font-weight: bold;
+        }
+        .score.good { color: #28a745; }
+        .score.warning { color: #ffc107; }
+        .score.bad { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Deployment Verification Tool</h1>
+        <p class="subtitle">Check if your app is properly configured and deployed</p>
+
+        <button class="button" onclick="runChecks()">Run Diagnostics</button>
+
+        <div id="results"></div>
+
+        <div id="instructions" class="instructions" style="display: none;">
+            <h3>How to Fix Issues</h3>
+            <div id="fix-instructions"></div>
+        </div>
+    </div>
+
+    <script>
+        async function runChecks() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>Running checks...</p>';
+
+            const checks = [];
+            let passCount = 0;
+            let totalChecks = 0;
+
+            // Check 1: Supabase URL
+            totalChecks++;
+            const supabaseUrl = 'https://gglzmggwifbkxtxjclcw.supabase.co';
+            if (supabaseUrl && supabaseUrl !== 'your-supabase-url') {
+                checks.push({
+                    status: 'pass',
+                    title: 'Supabase URL Configured',
+                    detail: supabaseUrl,
+                    icon: '✅'
+                });
+                passCount++;
+            } else {
+                checks.push({
+                    status: 'fail',
+                    title: 'Supabase URL Missing',
+                    detail: 'Environment variable VITE_SUPABASE_URL not set',
+                    icon: '❌'
+                });
+            }
+
+            // Check 2: Network connectivity
+            totalChecks++;
+            try {
+                const response = await fetch(supabaseUrl + '/rest/v1/', { method: 'HEAD' });
+                if (response.ok || response.status === 401) {
+                    checks.push({
+                        status: 'pass',
+                        title: 'Supabase Connection',
+                        detail: 'Can reach Supabase API',
+                        icon: '✅'
+                    });
+                    passCount++;
+                } else {
+                    checks.push({
+                        status: 'fail',
+                        title: 'Supabase Connection Failed',
+                        detail: `HTTP ${response.status}`,
+                        icon: '❌'
+                    });
+                }
+            } catch (error) {
+                checks.push({
+                    status: 'fail',
+                    title: 'Network Error',
+                    detail: error.message,
+                    icon: '❌'
+                });
+            }
+
+            // Check 3: CSS loaded
+            totalChecks++;
+            const stylesheetCount = document.styleSheets.length;
+            if (stylesheetCount > 0) {
+                checks.push({
+                    status: 'pass',
+                    title: 'Stylesheets Loaded',
+                    detail: `${stylesheetCount} stylesheet(s) found`,
+                    icon: '✅'
+                });
+                passCount++;
+            } else {
+                checks.push({
+                    status: 'warning',
+                    title: 'No Stylesheets',
+                    detail: 'CSS may not be loading',
+                    icon: '⚠️'
+                });
+            }
+
+            // Check 4: JavaScript modules
+            totalChecks++;
+            const scripts = document.querySelectorAll('script[type="module"]');
+            if (scripts.length > 0) {
+                checks.push({
+                    status: 'pass',
+                    title: 'JavaScript Modules',
+                    detail: `${scripts.length} module(s) loaded`,
+                    icon: '✅'
+                });
+                passCount++;
+            } else {
+                checks.push({
+                    status: 'warning',
+                    title: 'No Module Scripts',
+                    detail: 'App may not be fully loaded',
+                    icon: '⚠️'
+                });
+            }
+
+            // Check 5: Local Storage
+            totalChecks++;
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                checks.push({
+                    status: 'pass',
+                    title: 'Local Storage Available',
+                    detail: 'Session persistence will work',
+                    icon: '✅'
+                });
+                passCount++;
+            } catch (error) {
+                checks.push({
+                    status: 'fail',
+                    title: 'Local Storage Blocked',
+                    detail: 'Sessions cannot be saved',
+                    icon: '❌'
+                });
+            }
+
+            // Check 6: HTTPS
+            totalChecks++;
+            if (window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
+                checks.push({
+                    status: 'pass',
+                    title: 'Secure Connection',
+                    detail: window.location.protocol,
+                    icon: '✅'
+                });
+                passCount++;
+            } else {
+                checks.push({
+                    status: 'warning',
+                    title: 'Not Using HTTPS',
+                    detail: 'Some features may not work',
+                    icon: '⚠️'
+                });
+            }
+
+            // Display results
+            const percentage = Math.round((passCount / totalChecks) * 100);
+            let scoreClass = 'bad';
+            if (percentage >= 80) scoreClass = 'good';
+            else if (percentage >= 50) scoreClass = 'warning';
+
+            let html = `<div class="score ${scoreClass}">${percentage}%</div>`;
+            html += '<p style="text-align: center; color: #666; margin-bottom: 20px;">Deployment Health Score</p>';
+
+            checks.forEach(check => {
+                html += `
+                    <div class="check-item ${check.status}">
+                        <div class="icon">${check.icon}</div>
+                        <div class="check-content">
+                            <div class="check-title">${check.title}</div>
+                            <div class="check-detail">${check.detail}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            results.innerHTML = html;
+
+            // Show instructions if needed
+            if (passCount < totalChecks) {
+                showInstructions(checks);
+            }
+        }
+
+        function showInstructions(checks) {
+            const instructionsDiv = document.getElementById('instructions');
+            const fixDiv = document.getElementById('fix-instructions');
+
+            let fixes = [];
+
+            checks.forEach(check => {
+                if (check.status === 'fail') {
+                    if (check.title.includes('Supabase URL')) {
+                        fixes.push(`
+                            <p><strong>Missing Environment Variables:</strong></p>
+                            <ol>
+                                <li>Go to your hosting platform (Netlify/Vercel/AWS)</li>
+                                <li>Navigate to: <code>Settings → Environment Variables</code></li>
+                                <li>Add: <code>VITE_SUPABASE_URL</code> = <code>https://gglzmggwifbkxtxjclcw.supabase.co</code></li>
+                                <li>Add: <code>VITE_SUPABASE_ANON_KEY</code> = <code>[your-key]</code></li>
+                                <li>Redeploy with cache cleared</li>
+                            </ol>
+                        `);
+                    }
+                    if (check.title.includes('Connection')) {
+                        fixes.push(`
+                            <p><strong>Connection Issues:</strong></p>
+                            <ul>
+                                <li>Check Supabase status: <a href="https://status.supabase.com" target="_blank">status.supabase.com</a></li>
+                                <li>Verify your site URL is allowed in Supabase dashboard</li>
+                                <li>Check for CORS errors in browser console</li>
+                            </ul>
+                        `);
+                    }
+                }
+            });
+
+            if (fixes.length > 0) {
+                fixDiv.innerHTML = fixes.join('<hr style="margin: 20px 0;">');
+                instructionsDiv.style.display = 'block';
+            }
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            setTimeout(runChecks, 500);
+        });
+    </script>
+</body>
+</html>

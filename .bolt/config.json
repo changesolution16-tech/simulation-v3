@@ -1,0 +1,9 @@
+{
+  "type": "nextjs",
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "installCommand": "npm install",
+  "startCommand": "next start",
+  "outputDirectory": ".next",
+  "devCommand": "next dev"
+}
