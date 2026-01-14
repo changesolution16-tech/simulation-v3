@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { ReactNode, useEffect } from 'react';
 import { LogOut, User } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
