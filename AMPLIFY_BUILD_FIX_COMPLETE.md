@@ -120,10 +120,16 @@ Make sure your secrets are added as **Environment Variables** in the Amplify Con
    - `NEXTAUTH_SECRET`
    - `NEXTAUTH_URL`
    - `AWS_REGION`
-   - `AWS_ACCESS_KEY_ID`
-   - `AWS_SECRET_ACCESS_KEY`
+   - `AWS_ACCESS_KEY_ID` ⚠️ Must be stored as a secret (not plain text)
+   - `AWS_SECRET_ACCESS_KEY` ⚠️ Must be stored as a secret (not plain text)
    - `AWS_S3_BUCKET_NAME`
+   - `AWS_S3_PUBLIC_URL`
+   - `NEXT_PUBLIC_APP_URL`
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - etc.
+
+**Important**: AWS credentials (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`) should be configured as secrets in Amplify Console, not as plain environment variables. Amplify doesn't allow these to be added in plaintext for security reasons.
 
 ### Build vs Runtime
 - Environment variables are needed at **build time** for Next.js to compile

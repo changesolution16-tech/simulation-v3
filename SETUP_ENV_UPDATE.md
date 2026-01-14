@@ -93,14 +93,18 @@ Based on the `.env` file:
 - DB_PASSWORD
 - NEXTAUTH_URL
 - NEXTAUTH_SECRET
-- AWS_S3_PUBLIC_URL
-- AWS_S3_BUCKET_NAME
 - AWS_REGION
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+- AWS_S3_BUCKET_NAME
+- AWS_S3_PUBLIC_URL
 - NEXT_PUBLIC_APP_URL
 - NODE_ENV
 - DISABLE_NATIVE_SWC
 - NEXT_PUBLIC_SUPABASE_URL
 - NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+**Important**: AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) must be configured as secrets in AWS Amplify Console, not as plain environment variables.
 
 ## Adding New Variables
 
