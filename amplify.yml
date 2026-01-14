@@ -4,8 +4,6 @@ frontend:
     preBuild:
       commands:
         - npm ci
-        # Install jq to parse the secrets JSON string
-        - yum install jq -y
 
         # 1. Extract Secrets (Sensitive Data)
         - echo "DATABASE_URL=$(echo $secrets | jq -r '.DATABASE_URL')" >> .env
