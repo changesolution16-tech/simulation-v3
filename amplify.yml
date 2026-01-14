@@ -5,6 +5,7 @@ frontend:
       commands:
         - npm ci
         - node setup-env.js
+        - cut -d '=' -f 1 .env
     build:
       commands:
         - npm run build
