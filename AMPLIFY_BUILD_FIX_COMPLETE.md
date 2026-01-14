@@ -3,12 +3,15 @@
 ## Issues Fixed
 
 ### 1. Environment Variables Detection
-Updated `setup-env.js` to comprehensively detect and load secrets from multiple sources:
-- JSON format secrets
-- AWS_APP_* prefixed variables (Gen 2 pattern)
-- Direct environment variables
-- Custom-named variables
-- Enhanced debugging output to show all available environment variables
+Updated `setup-env.js` to intelligently manage environment variables:
+- **Reads local `.env` file** to determine which variables are needed
+- **Only writes those specific variables** from Amplify environment (no pollution)
+- **Detects Amplify environment** - skips setup when running locally
+- Searches multiple locations for variables:
+  - JSON format secrets
+  - AWS_APP_* prefixed variables (Gen 2 pattern)
+  - Direct environment variables
+- Enhanced debugging output showing which variables were found/missing
 
 ### 2. Static Generation Errors
 Fixed React context errors during static site generation by:
@@ -57,6 +60,27 @@ Modified `next.config.mjs` to:
 - No prerendering errors
 - Middleware included
 
+## How setup-env.js Works
+
+The script now intelligently manages environment variables:
+
+1. **Detects Environment**: Checks if running in Amplify (AWS_APP_ID, _AMPLIFY_BUILD, AWS_BRANCH)
+   - If local: Exits gracefully, uses existing `.env` file
+   - If Amplify: Proceeds with environment variable setup
+
+2. **Reads Local `.env`**: Parses the committed `.env` file to determine which variables the app needs
+
+3. **Searches Amplify Environment**: Looks for those specific variables in:
+   - `secrets` JSON string
+   - `AWS_APP_*` prefixed variables
+   - Direct environment variables
+
+4. **Writes Only Found Variables**: Creates a new `.env` with only the variables found in Amplify
+
+5. **Reports Status**: Shows which variables were found and which are missing
+
+This approach prevents writing hundreds of AWS system variables to your `.env` file while ensuring all required app variables are available.
+
 ## Next Steps
 
 1. **Push these changes to your repository**
@@ -72,9 +96,11 @@ Modified `next.config.mjs` to:
 
 3. **Verify Environment Variables**
    When the build runs, check the logs for:
-   - "All env var names" - shows what variables Amplify is providing
-   - "Found direct variable" - confirms which variables were detected
-   - "✅ All critical variables present" or warning about missing variables
+   - "Running in Amplify: Yes" - confirms Amplify environment detected
+   - "Found X variables in local .env file" - shows what variables are expected
+   - "Variables found:" with checkmarks - shows which were successfully loaded
+   - "⚠️ Warning: Missing variables" - shows which are missing (if any)
+   - "✅ All critical variables present" or warning about missing critical variables
 
 4. **If Build Still Fails**
    - Look for the debug output in Amplify build logs
