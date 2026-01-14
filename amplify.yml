@@ -4,26 +4,7 @@ frontend:
     preBuild:
       commands:
         - npm ci
-
-        # 1. Extract Secrets (Sensitive Data)
-        - echo "DATABASE_URL=$(echo $secrets | jq -r '.DATABASE_URL')" >> .env
-        - echo "DB_PASSWORD=$(echo $secrets | jq -r '.DB_PASSWORD')" >> .env
-        - echo "NEXTAUTH_SECRET=$(echo $secrets | jq -r '.NEXTAUTH_SECRET')" >> .env
-        - echo "AWS_ACCESS_KEY_ID=$(echo $secrets | jq -r '.AWS_ACCESS_KEY_ID')" >> .env
-        - echo "AWS_SECRET_ACCESS_KEY=$(echo $secrets | jq -r '.AWS_SECRET_ACCESS_KEY')" >> .env
-
-        # 2. Extract Standard Environment Variables (Non-Sensitive)
-        - echo "DB_HOST=$DB_HOST" >> .env
-        - echo "DB_PORT=$DB_PORT" >> .env
-        - echo "DB_NAME=$DB_NAME" >> .env
-        - echo "DB_USER=$DB_USER" >> .env
-        - echo "NEXTAUTH_URL=$NEXTAUTH_URL" >> .env
-        - echo "AWS_REGION=$AWS_REGION" >> .env
-        - echo "AWS_S3_BUCKET_NAME=$AWS_S3_BUCKET_NAME" >> .env
-        - echo "AWS_S3_PUBLIC_URL=$AWS_S3_PUBLIC_URL" >> .env
-        - echo "NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL" >> .env
-        - echo "NODE_ENV=$NODE_ENV" >> .env
-        - echo "DISABLE_NATIVE_SWC=$DISABLE_NATIVE_SWC" >> .env
+        - node setup-env.js
     build:
       commands:
         - npm run build
