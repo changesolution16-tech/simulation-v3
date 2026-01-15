@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import sql from '@/lib/db';
+import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
 
@@ -132,7 +133,7 @@ export async function POST(req: NextRequest) {
 
     console.log('Step 4: Checking if user already exists...');
     const existingUser = await sql`
-      SELECT id FROM auth.users WHERE email = ${email}
+      SELECT id FROM profiles WHERE email = ${email}
     `;
 
     console.log('Existing user check result:', { found: existingUser.length > 0 });
@@ -147,36 +148,53 @@ export async function POST(req: NextRequest) {
 
     console.log('✓ Email is available');
 
-    console.log('Step 5: Hashing password...');
-    const hashedPassword = await hashPassword(password);
+    console.log('Step 5: Hashing password with bcrypt...');
+    const hashedPassword = await bcrypt.hash(password, 10);
     console.log('✓ Password hashed');
 
-    console.log('Step 6: Creating user in auth.users...');
+    console.log('Step 6: Creating user profile...');
     const userResult = await sql`
-      INSERT INTO auth.users (email, encrypted_password, email_confirmed_at, created_at, updated_at)
-      VALUES (${email}, ${hashedPassword}, NOW(), NOW(), NOW())
-      RETURNING id
-    `;
-
-    const userId = userResult[0].id;
-    console.log('✓ User created in auth.users with ID:', userId);
-
-    console.log('Step 7: Creating user profile...');
-    await sql`
       INSERT INTO profiles (
-        id, email, full_name, role, organization, department, position,
-        is_active, language_preference, created_at, updated_at
+        email,
+        password_hash,
+        full_name,
+        username,
+        role,
+        institution,
+        department,
+        position,
+        is_active,
+        language_preference,
+        failed_login_attempts,
+        created_at,
+        updated_at
       )
-      VALUES (${userId}, ${email}, ${full_name}, ${role}, ${organization}, ${department}, ${position}, true, ${language_preference}, NOW(), NOW())
+      VALUES (
+        ${email},
+        ${hashedPassword},
+        ${full_name},
+        ${email.split('@')[0]},
+        ${role},
+        ${organization || null},
+        ${department || null},
+        ${position || null},
+        true,
+        ${language_preference},
+        0,
+        NOW(),
+        NOW()
+      )
+      RETURNING id, email, full_name, role
     `;
 
-    console.log('✓ Profile created successfully');
+    const newUser = userResult[0];
+    console.log('✓ User created successfully with ID:', newUser.id);
 
     const response = {
-      id: userId,
-      email,
-      full_name,
-      role,
+      id: newUser.id,
+      email: newUser.email,
+      full_name: newUser.full_name,
+      role: newUser.role,
       message: 'User created successfully'
     };
 
@@ -189,17 +207,21 @@ export async function POST(req: NextRequest) {
     console.error('Error type:', error.constructor.name);
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
-    console.error('Full error object:', JSON.stringify(error, null, 2));
+
+    // Try to get more detailed error info from postgres
+    if (error.code) {
+      console.error('PostgreSQL Error Code:', error.code);
+    }
+    if (error.detail) {
+      console.error('PostgreSQL Error Detail:', error.detail);
+    }
+    if (error.constraint) {
+      console.error('PostgreSQL Constraint:', error.constraint);
+    }
 
     return NextResponse.json(
       { error: 'Failed to create user', details: error.message },
       { status: 500 }
     );
   }
-}
-
-// Simple password hashing function (in production, use bcrypt or similar)
-async function hashPassword(password: string): Promise<string> {
-  const crypto = require('crypto');
-  return crypto.createHash('sha256').update(password).digest('hex');
 }
