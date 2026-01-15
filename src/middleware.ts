@@ -38,6 +38,7 @@ export const config = {
     '/teacher/:path*',
     '/learner/:path*',
     '/simulation/:path*',
+    '/simulations/:path*',
     '/settings/:path*',
   ],
 };
