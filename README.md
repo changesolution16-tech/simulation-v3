@@ -15,6 +15,37 @@ This is a comprehensive soft skills training platform built with Next.js, featur
 - Bravin metrics integration
 - Real-time progress tracking
 
+## Database & Authentication Architecture
+
+**IMPORTANT:** This application uses **AWS RDS PostgreSQL** for data persistence, NOT Supabase.
+
+### Key Points:
+
+- **Database:** AWS RDS PostgreSQL (not Supabase)
+- **Authentication Table:** The `profiles` table handles all authentication
+- **No Separate Auth Schema:** There is no `auth.users` table - all user data is in the `profiles` table
+- **Password Hashing:** Uses bcrypt for password hashing
+- **Session Management:** NextAuth.js with JWT strategy
+
+### Authentication Flow:
+
+1. User credentials are validated against the `profiles` table
+2. Password is verified using bcrypt comparison
+3. JWT token is issued via NextAuth.js
+4. All user queries use the `profiles` table directly
+
+### Profile Table Key Fields:
+
+- `id` - UUID (auto-generated)
+- `email` - User email (unique)
+- `password_hash` - Bcrypt hashed password
+- `full_name` - User's full name
+- `username` - Generated from email
+- `role` - User role (admin, instructor, learner)
+- `is_active` - Account status
+- `failed_login_attempts` - Security tracking
+- `account_locked_until` - Temporary lock timestamp
+
 ## Getting Started
 
 First, install dependencies:
