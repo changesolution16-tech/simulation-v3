@@ -42,23 +42,30 @@ export default function QuestionPage({
     setLoading(true);
 
     try {
-      // Load simulation with all scenarios
+      // Load simulation
       const simResponse = await fetch(`/api/simulations/${simulationId}`);
       if (!simResponse.ok) throw new Error('Failed to load simulation');
 
       const simData = await simResponse.json();
       setSimulation(simData);
 
-      // Find the scenario
-      const foundScenario = simData.scenarios?.find(
-        (s: any) => s.scenario_id === scenarioId || s.id === scenarioId
-      );
+      // Load scenario with options
+      const scenarioResponse = await fetch(`/api/scenarios/${scenarioId}`);
+      if (!scenarioResponse.ok) {
+        // Fallback: try finding in simulation scenarios
+        const foundScenario = simData.scenarios?.find(
+          (s: any) => s.scenario_id === scenarioId || s.id === scenarioId
+        );
 
-      if (!foundScenario) {
-        throw new Error('Scenario not found');
+        if (!foundScenario) {
+          throw new Error('Scenario not found');
+        }
+
+        setScenario(foundScenario);
+      } else {
+        const scenarioData = await scenarioResponse.json();
+        setScenario(scenarioData);
       }
-
-      setScenario(foundScenario);
     } catch (error) {
       console.error('Error loading data:', error);
       router.push('/dashboard');

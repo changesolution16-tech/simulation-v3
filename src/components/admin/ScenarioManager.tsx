@@ -230,13 +230,13 @@ export default function ScenarioManager({ simulationId }: ScenarioManagerProps) 
                   </div>
 
                   <div className="flex items-center gap-2 ml-4">
-                    <button
-                      onClick={() => alert('Edit scenario coming soon')}
+                    <a
+                      href={`/admin/scenarios/${scenario.id}/edit`}
                       className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                       title="Edit Scenario"
                     >
                       <Edit className="w-4 h-4" />
-                    </button>
+                    </a>
                     <button
                       onClick={() => alert('Preview scenario coming soon')}
                       className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"

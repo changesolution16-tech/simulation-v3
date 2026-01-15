@@ -48,17 +48,37 @@ const SimulationIntroduction: React.FC<SimulationIntroductionProps> = ({
 
             {videoUrl && (
               <div className="mb-8">
-                <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <PlayCircle className="w-16 h-16 text-gray-400 mx-auto mb-2" />
-                    <button
-                      onClick={() => setVideoWatched(true)}
-                      className="text-sm text-blue-600 hover:text-blue-700"
-                    >
-                      Mark video as watched
-                    </button>
+                {videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be') ? (
+                  <div className="aspect-video rounded-lg overflow-hidden">
+                    <iframe
+                      src={videoUrl.includes('youtube.com/embed/')
+                        ? videoUrl
+                        : videoUrl.replace('watch?v=', 'embed/')}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      onLoad={() => {
+                        setTimeout(() => setVideoWatched(true), 5000);
+                      }}
+                    />
                   </div>
-                </div>
+                ) : (
+                  <div className="aspect-video rounded-lg overflow-hidden">
+                    <video
+                      src={videoUrl}
+                      controls
+                      autoPlay
+                      onEnded={() => setVideoWatched(true)}
+                      className="w-full h-full"
+                    />
+                  </div>
+                )}
+                <button
+                  onClick={() => setVideoWatched(true)}
+                  className="mt-2 text-sm text-blue-600 hover:text-blue-700"
+                >
+                  Skip video
+                </button>
               </div>
             )}
 
