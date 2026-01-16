@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Save, X, Video, ArrowRight } from 'lucide-react';
+import PracticeExercisesEditor from './PracticeExercisesEditor';
+import NextStepsEditor from './NextStepsEditor';
+import LearningResourcesEditor from './LearningResourcesEditor';
 
 interface Option {
   id: string;
@@ -42,6 +45,8 @@ export default function ScenarioOptionsManager({
     feedback_video_url_beginner: '',
     feedback_video_url_intermediate: '',
     feedback_video_url_advanced: '',
+    practice_exercises: [] as string[],
+    next_steps: [] as string[],
   });
 
   useEffect(() => {
@@ -154,7 +159,7 @@ export default function ScenarioOptionsManager({
     }
   };
 
-  const openEditModal = (option: Option) => {
+  const openEditModal = (option: any) => {
     setEditingOption(option);
     setFormData({
       option_text: option.option_text || '',
@@ -165,6 +170,8 @@ export default function ScenarioOptionsManager({
       feedback_video_url_beginner: option.feedback_video_url_beginner || '',
       feedback_video_url_intermediate: option.feedback_video_url_intermediate || '',
       feedback_video_url_advanced: option.feedback_video_url_advanced || '',
+      practice_exercises: option.practice_exercises || [],
+      next_steps: option.next_steps || [],
     });
   };
 
@@ -178,6 +185,8 @@ export default function ScenarioOptionsManager({
       feedback_video_url_beginner: '',
       feedback_video_url_intermediate: '',
       feedback_video_url_advanced: '',
+      practice_exercises: [],
+      next_steps: [],
     });
   };
 
@@ -369,6 +378,34 @@ export default function ScenarioOptionsManager({
                   placeholder="https://www.youtube.com/watch?v=..."
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
+
+              {/* Learning Recommendations Section */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Learning Recommendations
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                  Provide resources, exercises, and next steps to support continued learning.
+                </p>
+
+                <div className="space-y-6">
+                  {/* Practice Exercises */}
+                  <PracticeExercisesEditor
+                    exercises={formData.practice_exercises}
+                    onChange={(exercises) =>
+                      setFormData({ ...formData, practice_exercises: exercises })
+                    }
+                  />
+
+                  {/* Next Steps */}
+                  <NextStepsEditor
+                    steps={formData.next_steps}
+                    onChange={(steps) =>
+                      setFormData({ ...formData, next_steps: steps })
+                    }
+                  />
+                </div>
               </div>
 
               {/* Expandable Advanced Settings */}

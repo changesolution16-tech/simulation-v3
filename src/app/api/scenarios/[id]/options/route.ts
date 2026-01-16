@@ -76,6 +76,8 @@ export async function POST(
       transition_video_url = null,
       skill_impacts = {},
       competency_impacts = {},
+      practice_exercises = [],
+      next_steps = [],
     } = body;
 
     // Validation
@@ -100,7 +102,9 @@ export async function POST(
         feedback_video_url_advanced,
         transition_video_url,
         skill_impacts,
-        competency_impacts
+        competency_impacts,
+        practice_exercises,
+        next_steps
       ) VALUES (
         ${scenarioId},
         ${option_text},
@@ -114,7 +118,9 @@ export async function POST(
         ${feedback_video_url_advanced},
         ${transition_video_url},
         ${JSON.stringify(skill_impacts)},
-        ${JSON.stringify(competency_impacts)}
+        ${JSON.stringify(competency_impacts)},
+        ${practice_exercises},
+        ${next_steps}
       )
       RETURNING *
     `;

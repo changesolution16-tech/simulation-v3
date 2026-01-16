@@ -6,8 +6,51 @@ import sql from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 /**
- * PATCH /api/options/[id]
- * Update a scenario option (admin/instructor only)
+ * GET /api/learning-resources/[id]
+ * Get a single learning resource
+ */
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const [resource] = await sql`
+      SELECT
+        lr.*,
+        COUNT(DISTINCT olr.option_id) as usage_count
+      FROM learning_resources lr
+      LEFT JOIN option_learning_resources olr ON olr.resource_id = lr.id
+      WHERE lr.id = ${id}
+      GROUP BY lr.id
+    `;
+
+    if (!resource) {
+      return NextResponse.json(
+        { error: 'Learning resource not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(resource);
+  } catch (error: any) {
+    console.error('Error fetching learning resource:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to fetch learning resource' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/learning-resources/[id]
+ * Update a learning resource (admin/instructor only)
  */
 export async function PATCH(
   req: NextRequest,
@@ -19,7 +62,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only admins and instructors can update options
+    // Only admins and instructors can update resources
     if (session.user.role !== 'admin' && session.user.role !== 'instructor') {
       return NextResponse.json(
         { error: 'Forbidden - insufficient permissions' },
@@ -27,7 +70,7 @@ export async function PATCH(
       );
     }
 
-    const { id: optionId } = await params;
+    const { id } = await params;
     const updates = await req.json();
 
     // Build dynamic update query
@@ -36,36 +79,17 @@ export async function PATCH(
     let paramIndex = 1;
 
     const allowedFields = [
-      'option_text', 'option_text_en', 'option_text_es',
-      'option_order', 'next_scenario_id',
-      'feedback_beginner', 'feedback_beginner_en', 'feedback_beginner_es',
-      'feedback_intermediate', 'feedback_intermediate_en', 'feedback_intermediate_es',
-      'feedback_advanced', 'feedback_advanced_en', 'feedback_advanced_es',
-      'feedback_video_url_beginner', 'feedback_video_source_beginner',
-      'feedback_video_library_id_beginner', 'feedback_video_file_id_beginner',
-      'feedback_video_url_intermediate', 'feedback_video_source_intermediate',
-      'feedback_video_library_id_intermediate', 'feedback_video_file_id_intermediate',
-      'feedback_video_url_advanced', 'feedback_video_source_advanced',
-      'feedback_video_library_id_advanced', 'feedback_video_file_id_advanced',
-      'transition_video_url', 'transition_video_source',
-      'transition_video_library_id', 'transition_video_file_id',
-      'skill_impacts', 'competency_impacts',
-      'practice_exercises', 'next_steps'
+      'title', 'resource_type', 'url', 'description',
+      'author', 'publisher', 'published_date', 'duration_minutes',
+      'difficulty_level', 'tags', 'category', 'metadata'
     ];
 
     for (const [key, value] of Object.entries(updates)) {
       if (allowedFields.includes(key)) {
-        // For JSON fields, stringify them
-        if (['skill_impacts', 'competency_impacts'].includes(key)) {
+        if (key === 'metadata') {
           fields.push(`${key} = $${paramIndex}`);
           values.push(JSON.stringify(value));
-        }
-        // For array fields (practice_exercises, next_steps), pass directly
-        else if (['practice_exercises', 'next_steps'].includes(key)) {
-          fields.push(`${key} = $${paramIndex}`);
-          values.push(value); // postgres library handles arrays
-        }
-        else {
+        } else {
           fields.push(`${key} = $${paramIndex}`);
           values.push(value);
         }
@@ -83,38 +107,38 @@ export async function PATCH(
     // Add updated_at
     fields.push(`updated_at = NOW()`);
 
-    // Add option ID
-    values.push(optionId);
+    // Add resource ID
+    values.push(id);
 
     const query = `
-      UPDATE scenario_options
+      UPDATE learning_resources
       SET ${fields.join(', ')}
       WHERE id = $${paramIndex}
       RETURNING *
     `;
 
-    const [option] = await sql.unsafe(query, values);
+    const [resource] = await sql.unsafe(query, values);
 
-    if (!option) {
+    if (!resource) {
       return NextResponse.json(
-        { error: 'Option not found' },
+        { error: 'Learning resource not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(option);
+    return NextResponse.json(resource);
   } catch (error: any) {
-    console.error('Error updating option:', error);
+    console.error('Error updating learning resource:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to update option' },
+      { error: error.message || 'Failed to update learning resource' },
       { status: 500 }
     );
   }
 }
 
 /**
- * DELETE /api/options/[id]
- * Delete a scenario option (admin only)
+ * DELETE /api/learning-resources/[id]
+ * Delete a learning resource (admin only)
  */
 export async function DELETE(
   req: NextRequest,
@@ -126,7 +150,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only admins can delete options
+    // Only admins can delete resources
     if (session.user.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden - admin access required' },
@@ -134,44 +158,44 @@ export async function DELETE(
       );
     }
 
-    const { id: optionId } = await params;
+    const { id } = await params;
 
-    // Check if there are any responses using this option
+    // Check if resource is in use
     const [usage] = await sql`
       SELECT COUNT(*) as count
-      FROM learner_responses
-      WHERE selected_option_id = ${optionId}
+      FROM option_learning_resources
+      WHERE resource_id = ${id}
     `;
 
     if (usage && parseInt(usage.count) > 0) {
       return NextResponse.json(
         {
-          error: 'Cannot delete option - it has been selected in learner responses',
-          response_count: parseInt(usage.count)
+          error: 'Cannot delete resource - it is assigned to scenario options',
+          usage_count: parseInt(usage.count)
         },
         { status: 400 }
       );
     }
 
-    // Delete the option
+    // Delete the resource
     const [deleted] = await sql`
-      DELETE FROM scenario_options
-      WHERE id = ${optionId}
+      DELETE FROM learning_resources
+      WHERE id = ${id}
       RETURNING id
     `;
 
     if (!deleted) {
       return NextResponse.json(
-        { error: 'Option not found' },
+        { error: 'Learning resource not found' },
         { status: 404 }
       );
     }
 
     return NextResponse.json({ success: true, id: deleted.id });
   } catch (error: any) {
-    console.error('Error deleting option:', error);
+    console.error('Error deleting learning resource:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to delete option' },
+      { error: error.message || 'Failed to delete learning resource' },
       { status: 500 }
     );
   }

@@ -7,6 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ChevronRight, Clock } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import LearningRecommendationsDisplay from '@/components/simulation/LearningRecommendationsDisplay';
 
 interface FeedbackPageProps {}
 
@@ -261,6 +262,12 @@ export default function FeedbackPage({}: FeedbackPageProps) {
                 </div>
               </motion.div>
             )}
+
+            {/* Learning Recommendations */}
+            <LearningRecommendationsDisplay
+              practiceExercises={selectedOption.practice_exercises || []}
+              nextSteps={selectedOption.next_steps || []}
+            />
 
             {/* Continue Button */}
             {canContinue && (
