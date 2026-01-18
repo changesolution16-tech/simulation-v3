@@ -304,17 +304,20 @@ const VideoEmbedField: React.FC<VideoEmbedFieldProps> = ({
       )}
 
       <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-        <p className="text-xs font-medium text-blue-900 mb-2">Supported Input:</p>
-        <ul className="text-xs text-blue-800 space-y-1 mb-2">
-          <li>• Direct video URLs (https://share.synthesia.io/...)</li>
-          <li>• Complete embed codes (paste the entire iframe code)</li>
+        <p className="text-xs font-medium text-blue-900 mb-2">Supported Input Formats:</p>
+        <ul className="text-xs text-blue-800 space-y-1 mb-3">
+          <li>• <strong>Direct video URLs:</strong> https://your-cdn.com/video.mp4</li>
+          <li>• <strong>Embed URLs:</strong> https://share.synthesia.io/...</li>
+          <li>• <strong>Platform URLs:</strong> https://youtube.com/watch?v=...</li>
+          <li>• <strong>Embed codes:</strong> Paste the entire &lt;iframe&gt; code</li>
         </ul>
         <p className="text-xs font-medium text-blue-900 mb-1">Supported Platforms:</p>
         <div className="flex flex-wrap gap-2">
-          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">Synthesia</span>
+          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">Direct Files (MP4/WebM)</span>
+          <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">Synthesia</span>
           <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">YouTube</span>
           <span className="px-2 py-1 bg-cyan-100 text-cyan-800 text-xs rounded">Vimeo</span>
-          <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">Loom</span>
+          <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded">Loom</span>
         </div>
       </div>
     </div>

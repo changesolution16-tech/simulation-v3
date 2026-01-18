@@ -29,8 +29,80 @@ export default function VideoPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Detect if URL is an embeddable video platform URL or direct video file
+  const isEmbedUrl = (url: string): boolean => {
+    const embedPatterns = [
+      'youtube.com/embed/',
+      'youtube.com/watch',
+      'youtu.be/',
+      'player.vimeo.com',
+      'vimeo.com/',
+      'loom.com/embed',
+      'loom.com/share',
+      'synthesia.io',
+      'share.synthesia.io',
+    ];
+    return embedPatterns.some(pattern => url.toLowerCase().includes(pattern));
+  };
+
+  // Convert various video URLs to embed format
+  const getEmbedUrl = (url: string): string => {
+    const lowerUrl = url.toLowerCase();
+
+    // YouTube
+    if (lowerUrl.includes('youtube.com/watch')) {
+      const urlObj = new URL(url);
+      const videoId = urlObj.searchParams.get('v');
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? 1 : 0}&enablejsapi=1&rel=0`;
+      }
+    } else if (lowerUrl.includes('youtu.be/')) {
+      const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? 1 : 0}&enablejsapi=1&rel=0`;
+      }
+    } else if (lowerUrl.includes('youtube.com/embed/')) {
+      // Already in embed format, just add autoplay parameter if needed
+      const urlObj = new URL(url);
+      if (autoPlay && !urlObj.searchParams.has('autoplay')) {
+        urlObj.searchParams.set('autoplay', '1');
+      }
+      return urlObj.toString();
+    }
+
+    // Vimeo
+    if (lowerUrl.includes('vimeo.com/') && !lowerUrl.includes('player.vimeo.com')) {
+      const videoId = url.match(/vimeo\.com\/(\d+)/)?.[1];
+      if (videoId) {
+        return `https://player.vimeo.com/video/${videoId}?autoplay=${autoPlay ? 1 : 0}`;
+      }
+    } else if (lowerUrl.includes('player.vimeo.com')) {
+      const urlObj = new URL(url);
+      if (autoPlay && !urlObj.searchParams.has('autoplay')) {
+        urlObj.searchParams.set('autoplay', '1');
+      }
+      return urlObj.toString();
+    }
+
+    // Loom
+    if (lowerUrl.includes('loom.com/share/')) {
+      const videoId = url.match(/loom\.com\/share\/([a-zA-Z0-9]+)/)?.[1];
+      if (videoId) {
+        return `https://www.loom.com/embed/${videoId}`;
+      }
+    } else if (lowerUrl.includes('loom.com/embed/')) {
+      return url;
+    }
+
+    // Synthesia or other platforms - use as-is
+    return url;
+  };
+
+  const useEmbedPlayer = isEmbedUrl(videoUrl);
+  const embedUrl = useEmbedPlayer ? getEmbedUrl(videoUrl) : '';
+
   useEffect(() => {
-    if (autoPlay && videoRef.current) {
+    if (autoPlay && videoRef.current && !useEmbedPlayer) {
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
         playPromise
@@ -43,7 +115,7 @@ export default function VideoPlayer({
           });
       }
     }
-  }, [autoPlay, videoUrl]);
+  }, [autoPlay, videoUrl, useEmbedPlayer]);
 
   const handlePlay = () => {
     if (videoRef.current) {
@@ -154,6 +226,36 @@ export default function VideoPlayer({
     );
   }
 
+  // Render iframe for embedded video platforms (YouTube, Vimeo, Synthesia, etc.)
+  if (useEmbedPlayer) {
+    return (
+      <div className="relative rounded-lg overflow-hidden bg-black">
+        <div className="aspect-video">
+          <iframe
+            src={embedUrl}
+            className="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            title="Video player"
+            referrerPolicy="strict-origin-when-cross-origin"
+            style={{ border: 'none' }}
+          />
+        </div>
+        {allowSkip && onSkip && (
+          <button
+            onClick={handleSkip}
+            className="absolute top-4 right-4 bg-gray-900/80 hover:bg-gray-900 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors z-20"
+            aria-label="Skip video"
+          >
+            <SkipForward className="w-4 h-4" />
+            Skip
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Render HTML5 video player for direct video files
   return (
     <div
       ref={containerRef}
