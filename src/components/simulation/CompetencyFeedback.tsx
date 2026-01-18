@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, AlertCircle, CheckCircle, Lightbulb } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, Lightbulb, ArrowRight } from 'lucide-react';
 
 interface CompetencyFeedbackItem {
   competency_id: string;
@@ -12,13 +12,16 @@ interface CompetencyFeedbackItem {
   level: 'advanced' | 'proficient' | 'developing' | 'awareness';
   feedback: string;
   suggestion: string;
+  previous_score?: number;
+  previous_level?: 'advanced' | 'proficient' | 'developing' | 'awareness';
 }
 
 interface CompetencyFeedbackProps {
   feedback: CompetencyFeedbackItem[];
+  showComparison?: boolean;
 }
 
-const CompetencyFeedback: React.FC<CompetencyFeedbackProps> = ({ feedback }) => {
+const CompetencyFeedback: React.FC<CompetencyFeedbackProps> = ({ feedback, showComparison = false }) => {
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'advanced':
@@ -52,6 +55,11 @@ const CompetencyFeedback: React.FC<CompetencyFeedbackProps> = ({ feedback }) => 
     }
   };
 
+  const getLevelRank = (level: string): number => {
+    const ranks = { advanced: 4, proficient: 3, developing: 2, awareness: 1 };
+    return ranks[level as keyof typeof ranks] || 0;
+  };
+
   if (feedback.length === 0) {
     return (
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
@@ -72,6 +80,8 @@ const CompetencyFeedback: React.FC<CompetencyFeedbackProps> = ({ feedback }) => 
 
       {feedback.map((item, index) => {
         const colors = getLevelColor(item.level);
+        const scoreChange = item.previous_score ? item.score - item.previous_score : 0;
+        const levelImproved = item.previous_level ? getLevelRank(item.level) > getLevelRank(item.previous_level) : false;
 
         return (
           <motion.div
@@ -87,18 +97,79 @@ const CompetencyFeedback: React.FC<CompetencyFeedbackProps> = ({ feedback }) => 
                   <span className="text-xs font-mono text-gray-500 dark:text-gray-400">
                     {item.competency_code}
                   </span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${colors.badge}`}>
-                    {item.level.charAt(0).toUpperCase() + item.level.slice(1)}
-                  </span>
+                  {showComparison && item.previous_level && item.level !== item.previous_level && (
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                        {item.previous_level}
+                      </span>
+                      <ArrowRight className="w-3 h-3 text-gray-400" />
+                      <span className={`px-2 py-0.5 rounded ${colors.badge}`}>
+                        {item.level}
+                      </span>
+                    </div>
+                  )}
+                  {(!showComparison || !item.previous_level || item.level === item.previous_level) && (
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${colors.badge}`}>
+                      {item.level.charAt(0).toUpperCase() + item.level.slice(1)}
+                    </span>
+                  )}
+                  {levelImproved && (
+                    <TrendingUp className="w-4 h-4 text-green-600" />
+                  )}
                 </div>
                 <h4 className={`text-lg font-bold ${colors.text}`}>
                   {item.competency_name}
                 </h4>
               </div>
-              <div className={`text-3xl font-bold ${colors.text}`}>
-                {Math.round(item.score)}%
+              <div className="text-right">
+                <div className={`text-3xl font-bold ${colors.text}`}>
+                  {Math.round(item.score)}%
+                </div>
+                {showComparison && item.previous_score && (
+                  <div className="flex items-center justify-end gap-1 mt-1">
+                    {scoreChange > 0 ? (
+                      <TrendingUp className="w-3 h-3 text-green-600" />
+                    ) : scoreChange < 0 ? (
+                      <TrendingDown className="w-3 h-3 text-red-600" />
+                    ) : null}
+                    <span className={`text-xs ${scoreChange > 0 ? 'text-green-600' : scoreChange < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                      {scoreChange > 0 && '+'}{scoreChange.toFixed(1)}%
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
+
+            {showComparison && item.previous_score && (
+              <div className="mb-4 bg-white/50 dark:bg-black/10 rounded-lg p-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-600 dark:text-gray-400">Previous Score</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    {Math.round(item.previous_score)}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2 overflow-hidden">
+                  <div
+                    className="h-full bg-gray-400 dark:bg-gray-500 transition-all"
+                    style={{ width: `${item.previous_score}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-xs mt-2">
+                  <span className="text-gray-600 dark:text-gray-400">Current Score</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    {Math.round(item.score)}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2 overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${item.score}%` }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                    className={`h-full ${colors.badge.replace('text-white', '')} transition-all`}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className={`${colors.text} text-sm leading-relaxed mb-4`}>
               <p>{item.feedback}</p>
