@@ -48,6 +48,17 @@ export default {
     view: 'View',
     download: 'Download',
     upload: 'Upload',
+    assigned: 'Assigned',
+    scenarios: 'Scenarios',
+    available: 'available',
+    difficulty: 'Difficulty',
+    assignedOnly: 'Show Assigned Only',
+    myAssignments: 'My Assignments',
+    allSimulations: 'All Simulations',
+    noResults: 'No simulations found',
+    tryDifferentFilter: 'Try adjusting your search or filters',
+    clearFilters: 'Clear Filters',
+    viewDetails: 'View Details',
   },
 
   auth: {
@@ -136,6 +147,7 @@ export default {
   },
 
   simulation: {
+    start: 'Start',
     landing: {
       welcome: 'Welcome to',
       overview: 'Overview',

@@ -32,14 +32,7 @@ const Dashboard: React.FC = () => {
   const isLoading = simulationsLoading || progressLoading;
 
   const handleStartSimulation = () => {
-    if (assignments && assignments.length > 0) {
-      router.push(`/simulations/${assignments[0].simulation_id}/play`);
-    } else if (simulations && simulations.length > 0) {
-      const publishedSim = simulations.find(s => s.is_published);
-      if (publishedSim) {
-        router.push(`/simulations/${publishedSim.id}/play`);
-      }
-    }
+    router.push('/simulations');
   };
 
   const completedCount = progress?.completedSimulations || 0;
@@ -66,11 +59,10 @@ const Dashboard: React.FC = () => {
             </p>
             <button
               onClick={handleStartSimulation}
-              disabled={availableSimulations === 0}
-              className="px-6 py-3 bg-white text-blue-700 rounded-lg shadow hover:shadow-lg transition-shadow flex items-center font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 bg-white text-blue-700 rounded-lg shadow hover:shadow-lg transition-shadow flex items-center font-medium"
             >
               <PlayCircle className="w-5 h-5 mr-2" />
-              {t('simulation.landing.begin')}
+              {t('navigation.simulations')}
             </button>
           </motion.div>
         </div>
