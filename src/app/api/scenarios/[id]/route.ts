@@ -24,11 +24,8 @@ export async function GET(
 
     // Try simulation_scenarios table first (current architecture)
     const [simScenario] = await sql`
-      SELECT
-        ss.*,
-        s.title as simulation_title
+      SELECT ss.*
       FROM simulation_scenarios ss
-      LEFT JOIN simulations s ON s.id = ss.simulation_id
       WHERE ss.id = ${scenarioId}
     `;
 
