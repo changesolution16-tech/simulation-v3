@@ -3,7 +3,23 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Award, TrendingUp, Target, BookOpen } from 'lucide-react';
-import { CompetencyService, type LearnerCompetency, type Competency } from '@/lib/competencies';
+type LearnerCompetency = {
+  competency_id: string;
+  competency_code: string;
+  competency_name: string;
+  current_score: number;
+  level_reached: number;
+  experiences_count: number;
+  last_updated: string;
+};
+
+type Competency = {
+  id: string;
+  competency_code: string;
+  competency_name: string;
+  competency_description: string;
+  competency_level: number;
+};
 
 interface CompetencyResultsProps {
   learnerId: string;
@@ -22,13 +38,18 @@ const CompetencyResults: React.FC<CompetencyResultsProps> = ({ learnerId, simula
   const loadCompetencies = async () => {
     setLoading(true);
     try {
-      const [learnerData, allData] = await Promise.all([
-        CompetencyService.getLearnerCompetencies(learnerId),
-        CompetencyService.getAll()
+      const [learnerResponse, allResponse] = await Promise.all([
+        fetch(`/api/competencies/learner/${learnerId}`),
+        fetch('/api/competencies')
       ]);
 
-      setCompetencies(learnerData);
-      setAllCompetencies(allData.filter(c => c.competency_level === 2));
+      if (learnerResponse.ok && allResponse.ok) {
+        const learnerData = await learnerResponse.json();
+        const allData = await allResponse.json();
+
+        setCompetencies(learnerData);
+        setAllCompetencies(allData.filter((c: any) => c.competency_level === 2));
+      }
     } catch (error) {
       console.error('Error loading competencies:', error);
     } finally {

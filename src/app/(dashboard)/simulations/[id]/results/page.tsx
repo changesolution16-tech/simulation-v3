@@ -74,7 +74,7 @@ export default function SimulationResultsPage() {
       description: 'Track your competency development across different skill areas',
       icon: TrendingUp,
       color: 'orange',
-      href: `/dashboard`,
+      href: `/simulations/${simulationId}/results/competencies`,
       available: true
     }
   ];
