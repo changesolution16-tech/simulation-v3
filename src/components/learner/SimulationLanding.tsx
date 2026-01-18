@@ -73,10 +73,28 @@ const SimulationLanding: React.FC<SimulationLandingProps> = ({ simulationId }) =
   };
 
   const getLandingObjectives = () => {
+    let objectives = [];
+
     if (language === 'es' && simulation?.landing_objectives_es) {
-      return simulation.landing_objectives_es;
+      objectives = simulation.landing_objectives_es;
+    } else if (simulation?.landing_objectives) {
+      objectives = simulation.landing_objectives;
     }
-    return simulation?.landing_objectives || [];
+
+    // Ensure objectives is always an array
+    if (!Array.isArray(objectives)) {
+      if (typeof objectives === 'string') {
+        try {
+          objectives = JSON.parse(objectives);
+        } catch {
+          return [];
+        }
+      } else {
+        return [];
+      }
+    }
+
+    return objectives;
   };
 
   if (isLoading) {

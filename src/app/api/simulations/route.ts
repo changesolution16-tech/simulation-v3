@@ -69,7 +69,27 @@ export async function GET(req: NextRequest) {
 
     const simulations = await query;
 
-    return NextResponse.json(simulations);
+    // Parse JSON fields if they're strings
+    const parseJsonField = (field: any): any => {
+      if (!field) return null;
+      if (typeof field === 'string') {
+        try {
+          return JSON.parse(field);
+        } catch {
+          return field;
+        }
+      }
+      return field;
+    };
+
+    const parsedSimulations = simulations.map((sim: any) => ({
+      ...sim,
+      landing_objectives: parseJsonField(sim.landing_objectives) || [],
+      landing_objectives_es: parseJsonField(sim.landing_objectives_es) || [],
+      tags: parseJsonField(sim.tags) || [],
+    }));
+
+    return NextResponse.json(parsedSimulations);
   } catch (error) {
     console.error('Error fetching simulations:', error);
     return NextResponse.json(

@@ -219,8 +219,24 @@ export async function GET(
       return Math.max(max, s.hierarchy_level || 0);
     }, 0);
 
+    // Parse JSON fields if they're strings
+    const parseJsonField = (field: any): any => {
+      if (!field) return null;
+      if (typeof field === 'string') {
+        try {
+          return JSON.parse(field);
+        } catch {
+          return field;
+        }
+      }
+      return field;
+    };
+
     const result = {
       ...simulation,
+      landing_objectives: parseJsonField(simulation.landing_objectives) || [],
+      landing_objectives_es: parseJsonField(simulation.landing_objectives_es) || [],
+      tags: parseJsonField(simulation.tags) || [],
       scenarios: scenariosWithOptions,
       scenario_count: scenariosWithOptions.length,
       max_level: maxLevel,
