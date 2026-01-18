@@ -26,13 +26,11 @@ export async function GET(
     const [scenario] = await sql`
       SELECT
         s.*,
-        t.name as topic_name,
         COUNT(DISTINCT ss.simulation_id) as used_in_simulations
       FROM scenarios s
-      LEFT JOIN topics t ON t.id = s.topic_id
       LEFT JOIN simulation_scenarios ss ON ss.scenario_id = s.id
       WHERE s.id = ${scenarioId}
-      GROUP BY s.id, t.name
+      GROUP BY s.id
     `;
 
     if (!scenario) {
