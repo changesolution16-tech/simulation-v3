@@ -65,6 +65,11 @@ export async function PATCH(
           fields.push(`${key} = $${paramIndex}`);
           values.push(value); // postgres library handles arrays
         }
+        // Convert empty strings to null for UUID fields
+        else if (key === 'next_scenario_id') {
+          fields.push(`${key} = $${paramIndex}`);
+          values.push(value && String(value).trim() !== '' ? value : null);
+        }
         else {
           fields.push(`${key} = $${paramIndex}`);
           values.push(value);

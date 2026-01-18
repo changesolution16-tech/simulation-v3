@@ -88,6 +88,9 @@ export async function POST(
       );
     }
 
+    // Convert empty strings to null for UUID fields
+    const nextScenarioIdValue = next_scenario_id && next_scenario_id.trim() !== '' ? next_scenario_id : null;
+
     const [option] = await sql`
       INSERT INTO scenario_options (
         scenario_id,
@@ -109,7 +112,7 @@ export async function POST(
         ${scenarioId},
         ${option_text},
         ${option_order || 0},
-        ${next_scenario_id},
+        ${nextScenarioIdValue},
         ${feedback_beginner || ''},
         ${feedback_intermediate || feedback_beginner || ''},
         ${feedback_advanced || feedback_beginner || ''},
