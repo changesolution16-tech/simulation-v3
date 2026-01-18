@@ -12,7 +12,12 @@ import {
   Layout,
   Award,
   ClipboardList,
-  UsersRound
+  UsersRound,
+  Folder,
+  Video,
+  Target,
+  Palette,
+  Network
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -40,15 +45,44 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return null;
   }
 
-  const navItems = [
-    { href: '/admin', label: 'Overview', icon: Layout },
-    { href: '/admin/users', label: 'Users', icon: Users },
-    { href: '/admin/simulations', label: 'Simulations', icon: BookOpen },
-    { href: '/admin/competencies', label: 'Competencies', icon: Award },
-    { href: '/admin/assignments', label: 'Assignments', icon: ClipboardList },
-    { href: '/admin/cohorts', label: 'Cohorts', icon: UsersRound },
-    { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
-    { href: '/admin/settings', label: 'Settings', icon: Settings }
+  const navSections = [
+    {
+      title: 'Overview',
+      items: [
+        { href: '/admin', label: 'Dashboard', icon: Layout }
+      ]
+    },
+    {
+      title: 'User Management',
+      items: [
+        { href: '/admin/users', label: 'Users', icon: Users },
+        { href: '/admin/cohorts', label: 'Cohorts', icon: UsersRound },
+        { href: '/admin/assignments', label: 'Assignments', icon: ClipboardList }
+      ]
+    },
+    {
+      title: 'Simulations',
+      items: [
+        { href: '/admin/categories', label: 'Categories', icon: Folder },
+        { href: '/admin/simulations', label: 'Simulations', icon: BookOpen },
+        { href: '/admin/videos', label: 'Videos', icon: Video }
+      ]
+    },
+    {
+      title: 'Assessment',
+      items: [
+        { href: '/admin/competencies', label: 'Competencies', icon: Award },
+        { href: '/admin/metrics', label: 'Metrics', icon: Target }
+      ]
+    },
+    {
+      title: 'System',
+      items: [
+        { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+        { href: '/admin/branding', label: 'Branding', icon: Palette },
+        { href: '/admin/settings', label: 'Settings', icon: Settings }
+      ]
+    }
   ];
 
   return (
@@ -63,26 +97,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </p>
           </div>
 
-          <nav className="px-3">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              const Icon = item.icon;
+          <nav className="px-3 space-y-6">
+            {navSections.map((section) => (
+              <div key={section.title}>
+                {section.title !== 'Overview' && (
+                  <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    {section.title}
+                  </h3>
+                )}
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    const isActive = pathname === item.href;
+                    const Icon = item.icon;
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg mb-1 transition-colors ${
-                    isActive
-                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              );
-            })}
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                          isActive
+                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
 
           <div className="absolute bottom-6 left-6">
