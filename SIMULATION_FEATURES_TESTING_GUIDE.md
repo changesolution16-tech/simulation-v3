@@ -368,58 +368,77 @@ Shows feedback based on selected option and difficulty level. Can include feedba
 ## Video Player
 
 ### Feature Description
-Unified video player supporting YouTube embeds and standard video files. Handles autoplay, skip, and completion events.
+Custom HTML5 video player with full controls. Uses only the video tag (no iframes) to avoid embedding restrictions.
 
 ### Location
 - **Component**: `src/components/simulation/VideoPlayer.tsx`
 
-### Supported Video Types
-- YouTube URLs (converted to embeds)
-- Standard HTML5 video (MP4, WebM, etc.)
-- Autoplay and skip functionality
-- Completion callbacks
+### Important: Video Hosting Required
+**Videos must be hosted with direct file URLs** (not YouTube/Vimeo embeds).
+
+Supported formats:
+- MP4 (H.264) - Recommended
+- WebM
+- OGG
+
+Recommended hosting:
+- AWS S3 with public access
+- Cloudflare R2
+- Your own CDN
+- See `VIDEO_HOSTING_GUIDE.md` for details
+
+### Built-in Controls
+- Play/Pause button
+- Volume control with mute
+- Seekbar with time scrubbing
+- Time display (current/total)
+- Fullscreen toggle
+- Skip button (when enabled)
+- Error handling with fallback
 
 ### How to Test
 
-1. **YouTube video**:
+1. **Direct video URL**:
    ```
-   Video URL: https://www.youtube.com/watch?v=VIDEO_ID
+   Video URL: https://your-cdn.com/videos/intro.mp4
 
    Expected:
-   - Converts to embed URL
-   - Renders as iframe
-   - Autoplay parameter added
-   - Skip button available
+   - Video loads and displays
+   - HTML5 video element renders
+   - Custom controls visible on hover
+   - Play button overlay before playing
+   - Progress bar updates as video plays
    ```
 
-2. **Standard video**:
-   ```
-   Video URL: https://example.com/video.mp4
-
-   Expected:
-   - Renders HTML5 video element
-   - Shows controls
-   - Play button overlay
-   - onComplete fires when ended
-   ```
-
-3. **Autoplay**:
+2. **Autoplay**:
    ```
    autoPlay={true}
 
    Expected:
    - Video attempts to play automatically
    - Falls back gracefully if browser blocks
+   - Shows play button if autoplay prevented
    ```
 
-4. **Skip functionality**:
+3. **Skip functionality**:
    ```
    allowSkip={true}
 
    Expected:
-   - Skip button visible
+   - Skip button visible in top-right
    - Clicking skip fires onSkip callback
    - Can proceed without watching
+   ```
+
+4. **Video controls**:
+   ```
+   Actions to test:
+   - Click play/pause
+   - Seek to different time
+   - Adjust volume
+   - Toggle mute
+   - Enter fullscreen
+   - Controls hide when playing (hover to show)
    ```
 
 5. **Completion tracking**:
@@ -427,10 +446,51 @@ Unified video player supporting YouTube embeds and standard video files. Handles
    Monitor onComplete callback
 
    Expected:
-   - Fires when video ends
+   - Fires when video ends naturally
    - Updates parent component state
    - Enables continue button
    ```
+
+6. **Error handling**:
+   ```
+   Test with invalid URL
+
+   Expected:
+   - Error message displays
+   - "Continue Anyway" button shows (if skip enabled)
+   - Console logs error details
+   ```
+
+7. **Multiple formats**:
+   ```
+   Video player tries multiple sources automatically:
+   - Tries MP4 first
+   - Falls back to WebM
+   - Falls back to OGG
+   - Shows error if all fail
+   ```
+
+### Setting Up Videos
+
+Before testing, ensure:
+- Videos are hosted with public URLs
+- URLs return video file directly (not HTML page)
+- CORS headers are configured
+- HTTPS is used (not HTTP)
+
+Example database setup:
+```sql
+-- Set video URLs
+UPDATE scenarios
+SET introduction_video_url = 'https://your-cdn.com/videos/scenario-1-intro.mp4'
+WHERE id = 'scenario-id';
+
+UPDATE scenario_options
+SET feedback_video_url_beginner = 'https://your-cdn.com/videos/option-feedback.mp4'
+WHERE id = 'option-id';
+```
+
+See **VIDEO_HOSTING_GUIDE.md** for complete setup instructions.
 
 ---
 
