@@ -26,6 +26,7 @@ export default function FeedbackPage({}: FeedbackPageProps) {
   const [videoWatched, setVideoWatched] = useState(false);
   const [decisionTimeSeconds, setDecisionTimeSeconds] = useState<number | null>(null);
   const [instanceId, setInstanceId] = useState<string | null>(null);
+  const [instanceDifficulty, setInstanceDifficulty] = useState<string | null>(null);
 
   useEffect(() => {
     if (!session?.user?.id || !simulationId || !scenarioId) {
@@ -58,6 +59,7 @@ export default function FeedbackPage({}: FeedbackPageProps) {
         if (instances.length > 0) {
           const instance = instances[0];
           setInstanceId(instance.id);
+          setInstanceDifficulty(instance.difficulty_level || null);
 
           // Get the learner's response for this scenario
           const responsesResponse = await fetch(`/api/instances/${instance.id}/responses?scenario_id=${scenarioId}`);
@@ -144,8 +146,15 @@ export default function FeedbackPage({}: FeedbackPageProps) {
     );
   }
 
-  const difficulty = simulation.difficulty || 'beginner';
-  const feedbackText = selectedOption.feedback?.[difficulty] || selectedOption.feedback_text || 'No feedback available';
+  const difficulty = instanceDifficulty || simulation.difficulty || 'beginner';
+  const feedbackKey = `feedback_${difficulty}` as keyof typeof selectedOption;
+  const feedbackText =
+    (selectedOption[feedbackKey] as string | undefined) ||
+    selectedOption.feedback_beginner ||
+    selectedOption.feedback_intermediate ||
+    selectedOption.feedback_advanced ||
+    selectedOption.feedback_text ||
+    'No feedback available';
   const hasFeedbackVideo = selectedOption.feedback_video_url;
   const canContinue = !hasFeedbackVideo || videoWatched;
 
