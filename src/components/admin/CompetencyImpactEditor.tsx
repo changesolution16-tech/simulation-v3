@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Award, TrendingUp, TrendingDown } from 'lucide-react';
-import { CompetencyService, Competency } from '@/lib/competencies';
+import type { Competency } from '@/lib/competencies';
 
 interface CompetencyImpact {
   impact: number;
@@ -33,7 +33,11 @@ const CompetencyImpactEditor: React.FC<CompetencyImpactEditorProps> = ({
 
   const loadCompetencies = async () => {
     setLoading(true);
-    const data = await CompetencyService.getAll();
+    const response = await fetch('/api/competencies');
+    if (!response.ok) {
+      throw new Error('Failed to load competencies');
+    }
+    const data = await response.json();
     setCompetencies(data);
     setLoading(false);
   };

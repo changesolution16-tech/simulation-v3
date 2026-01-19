@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus, X, TrendingUp, AlertCircle } from 'lucide-react';
-import { MetricsService } from '@/lib/competencies';
 import type { AssessmentMetric } from '@/lib/competencies';
 
 interface ScenarioMetricSelectorProps {
@@ -26,7 +25,11 @@ const ScenarioMetricSelector: React.FC<ScenarioMetricSelectorProps> = ({
   const loadMetrics = async () => {
     setLoading(true);
     try {
-      const metrics = await MetricsService.getAll();
+      const response = await fetch('/api/metrics');
+      if (!response.ok) {
+        throw new Error('Failed to load metrics');
+      }
+      const metrics = await response.json();
       setAvailableMetrics(metrics);
     } catch (error) {
       console.error('Error loading metrics:', error);

@@ -9,6 +9,7 @@ import {
 import VideoInputSelector from '../video/VideoInputSelector';
 import ImageUpload from './ImageUpload';
 import TabNavigation, { Tab } from './TabNavigation';
+import ScenarioFlowBuilder from './ScenarioFlowBuilder';
 import type { VideoInput } from '@/types';
 
 interface SimulationBuilderProps {
@@ -690,17 +691,7 @@ const FlowBuilderStep = ({ simulationId }: any) => (
         </p>
       </div>
     ) : (
-      <div className="p-6 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Scenario flow builder will be available here. You'll be able to:
-        </p>
-        <ul className="mt-3 space-y-1 text-sm text-gray-600 dark:text-gray-400">
-          <li>• Browse and add scenarios</li>
-          <li>• Set entry points</li>
-          <li>• Reorder scenario sequence</li>
-          <li>• Configure branching logic</li>
-        </ul>
-      </div>
+      <ScenarioFlowBuilder simulationId={simulationId} />
     )}
   </div>
 );

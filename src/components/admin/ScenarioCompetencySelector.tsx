@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Target, Plus, X, AlertCircle, Star, TrendingUp } from 'lucide-react';
-import { CompetencyService, Competency } from '@/lib/competencies';
-import {
-  ScenarioCompetencyService,
+import type { Competency } from '@/lib/competencies';
+import type {
   ScenarioTargetedCompetencyWithDetails,
   DevelopmentPriority,
   CompetencySelectionData
@@ -39,8 +38,18 @@ const ScenarioCompetencySelector: React.FC<ScenarioCompetencySelectorProps> = ({
     setLoading(true);
     try {
       const [competencies, targeted] = await Promise.all([
-        CompetencyService.getAll(),
-        ScenarioCompetencyService.getTargetedCompetencies(scenarioId)
+        fetch('/api/competencies').then(async (res) => {
+          if (!res.ok) {
+            throw new Error('Failed to load competencies');
+          }
+          return res.json();
+        }),
+        fetch(`/api/scenarios/${scenarioId}/competencies`).then(async (res) => {
+          if (!res.ok) {
+            throw new Error('Failed to load targeted competencies');
+          }
+          return res.json();
+        })
       ]);
 
       setAllCompetencies(competencies.filter(c => c.competency_level === 2));
@@ -83,18 +92,22 @@ const ScenarioCompetencySelector: React.FC<ScenarioCompetencySelectorProps> = ({
 
     setSaving(true);
     try {
-      const success = await ScenarioCompetencyService.setTargetedCompetencies(
-        scenarioId,
-        newTargeted
-      );
+      const response = await fetch(`/api/scenarios/${scenarioId}/competencies`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTargeted)
+      });
 
-      if (success) {
+      if (response.ok) {
         await loadData();
         resetForm();
         if (onCompetenciesChanged) {
-          const updated = await ScenarioCompetencyService.getTargetedCompetencies(scenarioId);
+          const updated = await response.json();
           onCompetenciesChanged(updated);
         }
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update competencies');
       }
     } catch (error) {
       console.error('Error adding competency:', error);
@@ -110,23 +123,29 @@ const ScenarioCompetencySelector: React.FC<ScenarioCompetencySelectorProps> = ({
 
     setSaving(true);
     try {
-      const success = await ScenarioCompetencyService.setTargetedCompetencies(
-        scenarioId,
-        remaining.map(tc => ({
-          competency_id: tc.competency_id,
-          target_weight: tc.target_weight,
-          is_primary: tc.is_primary,
-          development_priority: tc.development_priority,
-          notes: tc.notes
-        }))
-      );
+      const response = await fetch(`/api/scenarios/${scenarioId}/competencies`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          remaining.map(tc => ({
+            competency_id: tc.competency_id,
+            target_weight: tc.target_weight,
+            is_primary: tc.is_primary,
+            development_priority: tc.development_priority,
+            notes: tc.notes
+          }))
+        )
+      });
 
-      if (success) {
+      if (response.ok) {
         await loadData();
         if (onCompetenciesChanged) {
-          const updated = await ScenarioCompetencyService.getTargetedCompetencies(scenarioId);
+          const updated = await response.json();
           onCompetenciesChanged(updated);
         }
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update competencies');
       }
     } catch (error) {
       console.error('Error removing competency:', error);

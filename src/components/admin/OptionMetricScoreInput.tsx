@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, AlertCircle } from 'lucide-react';
-import { MetricsService } from '@/lib/competencies';
 import type { AssessmentMetric } from '@/lib/competencies';
 
 export interface OptionMetricScoreData {
@@ -53,7 +52,11 @@ const OptionMetricScoreInput: React.FC<OptionMetricScoreInputProps> = ({
   const loadMetrics = async () => {
     setLoading(true);
     try {
-      const metrics = await MetricsService.getAll();
+      const response = await fetch('/api/metrics');
+      if (!response.ok) {
+        throw new Error('Failed to load metrics');
+      }
+      const metrics = await response.json();
       setAvailableMetrics(metrics);
     } catch (error) {
       console.error('Error loading metrics:', error);

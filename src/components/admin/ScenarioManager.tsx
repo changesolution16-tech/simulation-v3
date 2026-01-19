@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Eye, Network, Video, Settings } from 'lucide-react';
+import ScenarioCreationModal from './ScenarioCreationModal';
+import ScenarioEditModal from './ScenarioEditModal';
 
 interface Scenario {
   id: string;
-  scenario_name: string;
+  title: string;
   question_text?: string;
   hierarchy_level: number;
-  video_url?: string;
-  video_source?: string;
-  order_index: number;
-  has_timer: boolean;
-  timer_seconds?: number;
+  prompt_video_url?: string;
+  prompt_video_source?: string;
+  sequence_order: number;
+  timer_enabled: boolean;
+  timer_limit_seconds?: number;
 }
 
 interface ScenarioManagerProps {
@@ -23,16 +25,7 @@ export default function ScenarioManager({ simulationId }: ScenarioManagerProps) 
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [formData, setFormData] = useState({
-    scenario_name: '',
-    question_text: '',
-    hierarchy_level: 1,
-    has_timer: false,
-    timer_seconds: 30,
-    video_url: '',
-    video_source: 'youtube'
-  });
+  const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
 
   useEffect(() => {
     loadScenarios();
@@ -72,65 +65,14 @@ export default function ScenarioManager({ simulationId }: ScenarioManagerProps) 
     }
   };
 
-  const handleCreateScenario = async () => {
-    if (!formData.scenario_name.trim() || !formData.question_text.trim()) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    setCreating(true);
-    try {
-      const response = await fetch(`/api/simulations/${simulationId}/scenarios`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          scenario_name: formData.scenario_name,
-          question_text: formData.question_text,
-          hierarchy_level: formData.hierarchy_level,
-          has_timer: formData.has_timer,
-          timer_seconds: formData.has_timer ? formData.timer_seconds : 30,
-          video_url: formData.video_url || null,
-          video_source: formData.video_source,
-          order_index: scenarios.length
-        })
-      });
-
-      if (response.ok) {
-        setFormData({
-          scenario_name: '',
-          question_text: '',
-          hierarchy_level: 1,
-          has_timer: false,
-          timer_seconds: 30,
-          video_url: '',
-          video_source: 'youtube'
-        });
-        setShowCreateModal(false);
-        loadScenarios();
-      } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to create scenario');
-      }
-    } catch (error) {
-      console.error('Error creating scenario:', error);
-      alert('Failed to create scenario');
-    } finally {
-      setCreating(false);
-    }
+  const handleCreateSuccess = (_message?: string) => {
+    setShowCreateModal(false);
+    loadScenarios();
   };
 
-  const resetForm = () => {
-    setFormData({
-      scenario_name: '',
-      question_text: '',
-      hierarchy_level: 1,
-      has_timer: false,
-      timer_seconds: 30,
-      video_url: '',
-      video_source: 'youtube'
-    });
+  const handleEditSuccess = (_message?: string) => {
+    setEditingScenarioId(null);
+    loadScenarios();
   };
 
   const getHierarchyLevelColor = (level: number) => {
@@ -198,7 +140,7 @@ export default function ScenarioManager({ simulationId }: ScenarioManagerProps) 
                         {index + 1}
                       </span>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {scenario.scenario_name}
+                        {scenario.title}
                       </h3>
                     </div>
 
@@ -213,30 +155,30 @@ export default function ScenarioManager({ simulationId }: ScenarioManagerProps) 
                         {getHierarchyLevelName(scenario.hierarchy_level)}
                       </span>
 
-                      {scenario.video_url && (
+                      {scenario.prompt_video_url && (
                         <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
                           <Video className="w-3 h-3 inline mr-1" />
                           Has Video
                         </span>
                       )}
 
-                      {scenario.has_timer && (
+                      {scenario.timer_enabled && (
                         <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300">
                           <Settings className="w-3 h-3 inline mr-1" />
-                          Timer: {scenario.timer_seconds}s
+                          Timer: {scenario.timer_limit_seconds}s
                         </span>
                       )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 ml-4">
-                    <a
-                      href={`/admin/scenarios/${scenario.id}/edit`}
+                    <button
+                      onClick={() => setEditingScenarioId(scenario.id)}
                       className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                       title="Edit Scenario"
                     >
                       <Edit className="w-4 h-4" />
-                    </a>
+                    </button>
                     <button
                       onClick={() => alert('Preview scenario coming soon')}
                       className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -268,128 +210,23 @@ export default function ScenarioManager({ simulationId }: ScenarioManagerProps) 
         </div>
       )}
 
-      {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              Create New Scenario
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Define the basic scenario details. You can add options and configure advanced settings after creation.
-            </p>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Scenario Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.scenario_name}
-                  onChange={(e) => setFormData({ ...formData, scenario_name: e.target.value })}
-                  placeholder="e.g., Initial Meeting with Alex"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Question Text *
-                </label>
-                <textarea
-                  value={formData.question_text}
-                  onChange={(e) => setFormData({ ...formData, question_text: e.target.value })}
-                  rows={3}
-                  placeholder="What do you say to Alex?"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+        <ScenarioCreationModal
+          simulationId={simulationId}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={handleCreateSuccess}
+          onError={(message) => alert(message)}
+        />
+      )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Hierarchy Level
-                </label>
-                <select
-                  value={formData.hierarchy_level}
-                  onChange={(e) => setFormData({ ...formData, hierarchy_level: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value={1}>Level 1 - Entry Level</option>
-                  <option value={2}>Level 2 - Associate</option>
-                  <option value={3}>Level 3 - Manager</option>
-                  <option value={4}>Level 4 - Senior Manager</option>
-                  <option value={5}>Level 5 - Executive</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Video URL (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={formData.video_url}
-                  onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.has_timer}
-                    onChange={(e) => setFormData({ ...formData, has_timer: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Enable Timer
-                  </span>
-                </label>
-
-                {formData.has_timer && (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      value={formData.timer_seconds}
-                      onChange={(e) => setFormData({ ...formData, timer_seconds: parseInt(e.target.value) || 30 })}
-                      min="10"
-                      max="300"
-                      className="w-20 px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">seconds</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button
-                onClick={() => {
-                  setShowCreateModal(false);
-                  resetForm();
-                }}
-                disabled={creating}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateScenario}
-                disabled={creating}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-              >
-                {creating ? (
-                  <>
-                    <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    Creating...
-                  </>
-                ) : (
-                  'Create Scenario'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+      {editingScenarioId && (
+        <ScenarioEditModal
+          scenarioId={editingScenarioId}
+          simulationId={simulationId}
+          onClose={() => setEditingScenarioId(null)}
+          onSuccess={handleEditSuccess}
+          onError={(message) => alert(message)}
+        />
       )}
 
       {/* Info Box */}

@@ -105,7 +105,7 @@ export async function PATCH(
       'fiction_contract_text',
       'timer_enabled', 'timer_visible', 'timer_display_location',
       'timer_type', 'timer_limit_seconds', 'show_timer_in_feedback',
-      'timer_warning_threshold_seconds', 'hierarchy_level', 'metadata'
+      'timer_warning_threshold_seconds', 'hierarchy_level', 'auto_calculate_level', 'metadata'
     ];
 
     for (const [key, value] of Object.entries(updates)) {

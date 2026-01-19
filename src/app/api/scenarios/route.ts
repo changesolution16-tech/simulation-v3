@@ -108,8 +108,14 @@ export async function POST(req: NextRequest) {
       difficulty,
       is_end_scenario = false,
       prompt_video_url = null,
+      prompt_video_source = null,
+      prompt_video_file_id = null,
       introduction_video_url = null,
+      introduction_video_source = null,
+      introduction_video_file_id = null,
       transition_video_url = null,
+      transition_video_source = null,
+      transition_video_file_id = null,
       fiction_contract_text = null,
       timer_enabled = false,
       timer_visible = false,
@@ -119,6 +125,7 @@ export async function POST(req: NextRequest) {
       show_timer_in_feedback = true,
       timer_warning_threshold_seconds = 30,
       hierarchy_level = 1,
+      auto_calculate_level = true,
     } = body;
 
     // Validation
@@ -139,8 +146,14 @@ export async function POST(req: NextRequest) {
         is_end_scenario,
         content_status,
         prompt_video_url,
+        prompt_video_source,
+        prompt_video_file_id,
         introduction_video_url,
+        introduction_video_source,
+        introduction_video_file_id,
         transition_video_url,
+        transition_video_source,
+        transition_video_file_id,
         fiction_contract_text,
         timer_enabled,
         timer_visible,
@@ -149,7 +162,8 @@ export async function POST(req: NextRequest) {
         timer_limit_seconds,
         show_timer_in_feedback,
         timer_warning_threshold_seconds,
-        hierarchy_level
+        hierarchy_level,
+        auto_calculate_level
       ) VALUES (
         ${title},
         ${description || null},
@@ -159,8 +173,14 @@ export async function POST(req: NextRequest) {
         ${is_end_scenario},
         'draft',
         ${prompt_video_url},
+        ${prompt_video_source},
+        ${prompt_video_file_id},
         ${introduction_video_url},
+        ${introduction_video_source},
+        ${introduction_video_file_id},
         ${transition_video_url},
+        ${transition_video_source},
+        ${transition_video_file_id},
         ${fiction_contract_text},
         ${timer_enabled},
         ${timer_visible},
@@ -169,7 +189,8 @@ export async function POST(req: NextRequest) {
         ${timer_limit_seconds},
         ${show_timer_in_feedback},
         ${timer_warning_threshold_seconds},
-        ${hierarchy_level}
+        ${hierarchy_level},
+        ${auto_calculate_level}
       )
       RETURNING *
     `;
