@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { ReactNode, useEffect } from 'react';
 import { LogOut, User, Home, BookOpen, Users, Settings as SettingsIcon } from 'lucide-react';
 import Link from 'next/link';
+import { normalizeRole } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +43,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     { href: '/simulations', label: 'Simulations', icon: BookOpen },
   ];
 
-  if (session.user.role === 'admin' || session.user.role === 'instructor') {
+  const normalizedRole = normalizeRole(session.user.role);
+
+  if (normalizedRole === 'admin' || normalizedRole === 'instructor') {
     navLinks.push({ href: '/admin', label: 'Admin', icon: SettingsIcon });
   }
 
@@ -82,7 +85,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <User className="w-5 h-5" />
                 <span className="text-sm">{session.user.name}</span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  ({session.user.role})
+                  ({normalizedRole})
                 </span>
               </div>
 

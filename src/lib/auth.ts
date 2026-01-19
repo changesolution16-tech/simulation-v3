@@ -2,6 +2,7 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { getUserByEmail, updateLastLogin, incrementFailedLogins } from './db-helpers';
+import { normalizeRole } from './roles';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -40,11 +41,13 @@ export const authOptions: NextAuthOptions = {
 
         await updateLastLogin(user.id);
 
+        const normalizedRole = normalizeRole(user.role);
+
         return {
           id: user.id,
           email: user.email,
           name: user.full_name,
-          role: user.role === 'learner' ? 'student' : user.role,
+          role: normalizedRole,
           username: user.username,
           institution: user.institution,
           department: user.department,
@@ -57,11 +60,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.role = normalizeRole(user.role as string);
         token.username = user.username;
         token.institution = user.institution;
         token.department = user.department;
         token.position = user.position;
+      }
+      if (token.role) {
+        token.role = normalizeRole(token.role as string);
       }
       return token;
     },

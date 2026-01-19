@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import { Plus, Search, Edit, Trash2, X } from 'lucide-react';
+import { normalizeRole } from '@/lib/roles';
 
 interface User {
   id: string;
@@ -61,7 +62,16 @@ export default function UsersPage() {
     }
 
     if (roleFilter !== 'all') {
-      filtered = filtered.filter((user) => user.role === roleFilter);
+      filtered = filtered.filter((user) => {
+        const normalized = normalizeRole(user.role);
+        if (roleFilter === 'learner') {
+          return normalized === 'learner';
+        }
+        if (roleFilter === 'instructor') {
+          return normalized === 'instructor';
+        }
+        return normalized === roleFilter;
+      });
     }
 
     setFilteredUsers(filtered);
@@ -220,14 +230,14 @@ export default function UsersPage() {
                 <td className="px-6 py-4">
                   <span
                     className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      user.role === 'admin'
+                      normalizeRole(user.role) === 'admin'
                         ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-                        : user.role === 'instructor'
+                        : normalizeRole(user.role) === 'instructor'
                         ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
                         : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
                     }`}
                   >
-                    {user.role}
+                    {normalizeRole(user.role)}
                   </span>
                 </td>
                 <td className="px-6 py-4">
@@ -313,7 +323,7 @@ function UserModal({
     email: user?.email || '',
     password: '',
     full_name: user?.full_name || '',
-    role: user?.role || 'learner',
+    role: normalizeRole(user?.role) || 'learner',
     organization: user?.organization || '',
     department: user?.department || '',
     is_active: user?.is_active ?? true

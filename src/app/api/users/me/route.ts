@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import sql from '@/lib/db';
+import { normalizeRole } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +46,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return NextResponse.json(result[0]);
+    return NextResponse.json({
+      ...result[0],
+      role: normalizeRole(result[0].role)
+    });
   } catch (error) {
     console.error('Error fetching user:', error);
     return NextResponse.json(
@@ -100,7 +104,10 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return NextResponse.json(result[0]);
+    return NextResponse.json({
+      ...result[0],
+      role: normalizeRole(result[0].role)
+    });
   } catch (error) {
     console.error('Error updating user:', error);
     return NextResponse.json(

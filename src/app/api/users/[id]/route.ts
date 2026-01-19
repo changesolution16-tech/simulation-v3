@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import sql from '@/lib/db';
+import { normalizeRole } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +50,10 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return NextResponse.json(result[0]);
+    return NextResponse.json({
+      ...result[0],
+      role: normalizeRole(result[0].role)
+    });
   } catch (error: any) {
     console.error('Error fetching user:', error);
     return NextResponse.json(
@@ -104,7 +108,7 @@ export async function PATCH(
       if (allowedFields.includes(key)) {
         updates[key] = value;
       } else if (adminOnlyFields.includes(key) && isAdmin) {
-        updates[key] = value;
+        updates[key] = key === 'role' ? normalizeRole(value as string) : value;
       }
     });
 

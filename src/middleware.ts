@@ -5,12 +5,17 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
+    const role = token?.role === 'student'
+      ? 'learner'
+      : token?.role === 'teacher'
+      ? 'instructor'
+      : token?.role;
 
-    if (path.startsWith('/admin') && token?.role !== 'admin') {
+    if (path.startsWith('/admin') && role !== 'admin') {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
 
-    if (path.startsWith('/teacher') && token?.role !== 'instructor' && token?.role !== 'admin') {
+    if (path.startsWith('/teacher') && role !== 'instructor' && role !== 'admin') {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
 

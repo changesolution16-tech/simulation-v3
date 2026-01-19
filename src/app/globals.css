@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --color-brand-primary: #2563eb;
+    --color-brand-secondary: #1e40af;
+    --color-brand-primary-rgb: 37, 99, 235;
+    --color-brand-secondary-rgb: 30, 64, 175;
+  }
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;

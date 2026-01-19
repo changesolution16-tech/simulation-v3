@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import sql from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { normalizeRole } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,8 @@ export async function GET(req: NextRequest) {
 
     console.log('Query params:', { role, search, limit, offset });
 
+    const normalizedRole = role ? normalizeRole(role) : null;
+
     const result = await sql`
       SELECT
         id,
@@ -49,7 +52,7 @@ export async function GET(req: NextRequest) {
         language_preference
       FROM profiles
       WHERE 1=1
-        ${role ? sql`AND role = ${role}` : sql``}
+        ${normalizedRole ? sql`AND role = ${normalizedRole}` : sql``}
         ${search ? sql`AND (full_name ILIKE ${'%' + search + '%'} OR email ILIKE ${'%' + search + '%'})` : sql``}
       ORDER BY created_at DESC
       LIMIT ${limit}
@@ -58,7 +61,12 @@ export async function GET(req: NextRequest) {
 
     console.log('✓ Query successful - Found', result.length, 'users');
 
-    return NextResponse.json(result);
+    const normalized = result.map((user: any) => ({
+      ...user,
+      role: normalizeRole(user.role)
+    }));
+
+    return NextResponse.json(normalized);
   } catch (error: any) {
     console.error('=== ERROR FETCHING USERS ===');
     console.error('Error:', error);
@@ -153,6 +161,8 @@ export async function POST(req: NextRequest) {
     console.log('✓ Password hashed');
 
     console.log('Step 6: Creating user profile...');
+    const normalizedRole = normalizeRole(role);
+
     const userResult = await sql`
       INSERT INTO profiles (
         email,
@@ -174,7 +184,7 @@ export async function POST(req: NextRequest) {
         ${hashedPassword},
         ${full_name},
         ${email.split('@')[0]},
-        ${role},
+        ${normalizedRole},
         ${organization || null},
         ${department || null},
         ${position || null},

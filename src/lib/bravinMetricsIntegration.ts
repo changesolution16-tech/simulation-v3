@@ -166,7 +166,7 @@ export class BravinMetricsIntegration {
       const { learnerId, scenarioId, optionId, simulationInstanceId, mapping } = params;
 
       const result = await db`
-        INSERT INTO bravin_assessments (
+        INSERT INTO bravin_decision_assessments (
           learner_id, scenario_id, option_id, simulation_instance_id,
           boldness_impact, responsibility_impact, accountability_impact,
           vision_impact, integrity_impact, nurturance_impact,
@@ -239,14 +239,14 @@ export class BravinMetricsIntegration {
       let query;
       if (simulationInstanceId) {
         query = db`
-          SELECT * FROM bravin_assessments
+          SELECT * FROM bravin_decision_assessments
           WHERE learner_id = ${learnerId}
             AND simulation_instance_id = ${simulationInstanceId}
           ORDER BY created_at DESC
         `;
       } else {
         query = db`
-          SELECT * FROM bravin_assessments
+          SELECT * FROM bravin_decision_assessments
           WHERE learner_id = ${learnerId}
           ORDER BY created_at DESC
         `;
@@ -272,7 +272,7 @@ export class BravinMetricsIntegration {
           AVG(nurturance_impact) as avg_nurturance,
           AVG(overall_bravin_score) as avg_overall_score,
           COUNT(*) as total_assessments
-        FROM bravin_assessments
+        FROM bravin_decision_assessments
         WHERE learner_id = ${learnerId}
       `;
 

@@ -8,6 +8,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        'brand-primary': 'rgb(var(--color-brand-primary-rgb) / <alpha-value>)',
+        'brand-secondary': 'rgb(var(--color-brand-secondary-rgb) / <alpha-value>)',
+      },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":
