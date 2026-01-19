@@ -156,6 +156,8 @@ export async function GET(
     }
 
     const { id: instanceId } = await params;
+    const searchParams = req.nextUrl.searchParams;
+    const scenarioId = searchParams.get('scenario_id');
 
     // Verify instance ownership
     const [instance] = await sql`
@@ -178,21 +180,48 @@ export async function GET(
       );
     }
 
-    const responses = await sql`
-      SELECT
-        lr.*,
-        s.title as scenario_title,
-        s.hierarchy_level,
-        so.option_text,
-        so.skill_impacts,
-        so.competency_impacts,
-        so.next_scenario_id
-      FROM learner_responses lr
-      INNER JOIN scenarios s ON s.id = lr.scenario_id
-      LEFT JOIN scenario_options so ON so.id = lr.selected_option_id
-      WHERE lr.instance_id = ${instanceId}
-      ORDER BY lr.responded_at
-    `;
+    let responses;
+
+    if (scenarioId) {
+      // Filter by specific scenario
+      responses = await sql`
+        SELECT
+          lr.*,
+          s.title as scenario_title,
+          s.hierarchy_level,
+          so.option_text,
+          so.skill_impacts,
+          so.competency_impacts,
+          so.next_scenario_id,
+          lr.selected_option_id as option_id,
+          lr.response_time_seconds as time_to_decision_seconds
+        FROM learner_responses lr
+        INNER JOIN scenarios s ON s.id = lr.scenario_id
+        LEFT JOIN scenario_options so ON so.id = lr.selected_option_id
+        WHERE lr.instance_id = ${instanceId}
+          AND lr.scenario_id = ${scenarioId}
+        ORDER BY lr.responded_at DESC
+      `;
+    } else {
+      // Get all responses for instance
+      responses = await sql`
+        SELECT
+          lr.*,
+          s.title as scenario_title,
+          s.hierarchy_level,
+          so.option_text,
+          so.skill_impacts,
+          so.competency_impacts,
+          so.next_scenario_id,
+          lr.selected_option_id as option_id,
+          lr.response_time_seconds as time_to_decision_seconds
+        FROM learner_responses lr
+        INNER JOIN scenarios s ON s.id = lr.scenario_id
+        LEFT JOIN scenario_options so ON so.id = lr.selected_option_id
+        WHERE lr.instance_id = ${instanceId}
+        ORDER BY lr.responded_at
+      `;
+    }
 
     return NextResponse.json(responses);
   } catch (error: any) {
