@@ -65,12 +65,12 @@ export async function GET(req: NextRequest) {
         s.display_name as simulation_display_name,
         s.difficulty as simulation_difficulty,
         s.max_level as simulation_max_level,
-        u.full_name as user_name,
-        u.email as user_email,
+        p.full_name as user_name,
+        p.email as user_email,
         ta.title as assignment_title
       FROM simulation_instances si
       INNER JOIN simulations s ON s.id = si.simulation_id
-      LEFT JOIN users u ON u.id = si.user_id
+      LEFT JOIN profiles p ON p.id = si.user_id
       LEFT JOIN training_assignments ta ON ta.id = si.assignment_id
       ${whereClause}
       ORDER BY si.created_at DESC
