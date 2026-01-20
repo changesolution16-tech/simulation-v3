@@ -142,6 +142,59 @@ export async function PATCH(
   }
 }
 
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const result = await sql`
+      SELECT
+        id,
+        title,
+        description,
+        video_url,
+        video_platform,
+        video_source,
+        video_type,
+        video_file_id,
+        thumbnail_url,
+        duration_seconds,
+        tags,
+        topic_ids,
+        competency_ids,
+        usage_count,
+        difficulty,
+        is_public,
+        avg_engagement_score,
+        avg_completion_rate,
+        is_active,
+        created_at,
+        updated_at
+      FROM video_library
+      WHERE id = ${id}
+    `;
+
+    if (result.length === 0) {
+      return NextResponse.json({ error: 'Video not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(result[0]);
+  } catch (error: any) {
+    console.error('Error fetching video library item:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch video', details: error.message },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
