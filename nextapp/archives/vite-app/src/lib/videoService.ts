@@ -116,7 +116,7 @@ export interface VideoEngagement {
   completion_count: number;
   skip_count: number;
   pause_count: number;
-  rewind_count: number;
+  rewind_count: number; 
   interaction_events: Array<{
     timestamp: number;
     event_type: string;

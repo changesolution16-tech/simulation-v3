@@ -38,12 +38,25 @@ interface UsageImpact {
   };
 }
 
+interface TopicOption {
+  id: string;
+  title: string;
+}
+
+interface CompetencyOption {
+  id: string;
+  code: string;
+  name: string;
+}
+
 const VideoLibrary: React.FC = () => {
   const [videos, setVideos] = useState<VideoLibraryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPlatform, setFilterPlatform] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
+  const [filterTopic, setFilterTopic] = useState<string>('all');
+  const [filterCompetency, setFilterCompetency] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingVideo, setEditingVideo] = useState<VideoLibraryItem | null>(null);
   const [previewVideo, setPreviewVideo] = useState<VideoLibraryItem | null>(null);
@@ -53,18 +66,23 @@ const VideoLibrary: React.FC = () => {
   const [impactData, setImpactData] = useState<UsageImpact | null>(null);
   const [pendingVideoUpdate, setPendingVideoUpdate] = useState<{ id: string; data: any } | null>(null);
   const [loadingImpact, setLoadingImpact] = useState(false);
+  const [topics, setTopics] = useState<TopicOption[]>([]);
+  const [competencies, setCompetencies] = useState<CompetencyOption[]>([]);
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     tags: '',
     video_type: 'prompt',
-    is_public: false
+    is_public: false,
+    topic_ids: [] as string[],
+    competency_ids: [] as string[]
   });
   const [videoInput, setVideoInput] = useState<VideoInput>({ source: 'url' });
 
   useEffect(() => {
     loadVideos();
+    loadFilters();
   }, []);
 
   const loadVideos = async () => {
@@ -79,6 +97,27 @@ const VideoLibrary: React.FC = () => {
       setError(err.message || 'Failed to load videos');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFilters = async () => {
+    try {
+      const [topicsResponse, competenciesResponse] = await Promise.all([
+        fetch('/api/topics'),
+        fetch('/api/competencies')
+      ]);
+
+      if (topicsResponse.ok) {
+        const data = await topicsResponse.json();
+        setTopics(data || []);
+      }
+
+      if (competenciesResponse.ok) {
+        const data = await competenciesResponse.json();
+        setCompetencies((data || []).filter((comp: any) => comp.competency_level === 2));
+      }
+    } catch (err) {
+      console.error('Error loading video library filters:', err);
     }
   };
 
@@ -124,7 +163,9 @@ const VideoLibrary: React.FC = () => {
         video_file_id: videoInput.fileId || null,
         tags: tagsArray,
         video_type: formData.video_type,
-        is_public: formData.is_public
+        is_public: formData.is_public,
+        topic_ids: formData.topic_ids,
+        competency_ids: formData.competency_ids
       };
 
       if (editingVideo) {
@@ -209,7 +250,9 @@ const VideoLibrary: React.FC = () => {
       description: video.description || '',
       tags: (video.tags || []).join(', '),
       video_type: video.video_type,
-      is_public: video.is_public
+      is_public: video.is_public,
+      topic_ids: video.topic_ids || [],
+      competency_ids: video.competency_ids || []
     });
     setVideoInput({
       source: video.video_source || 'url',
@@ -247,7 +290,9 @@ const VideoLibrary: React.FC = () => {
       description: '',
       tags: '',
       video_type: 'prompt',
-      is_public: false
+      is_public: false,
+      topic_ids: [],
+      competency_ids: []
     });
     setVideoInput({ source: 'url' });
     setEditingVideo(null);
@@ -261,7 +306,9 @@ const VideoLibrary: React.FC = () => {
       (video.tags || []).some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesPlatform = filterPlatform === 'all' || video.video_platform === filterPlatform;
     const matchesType = filterType === 'all' || video.video_type === filterType;
-    return matchesSearch && matchesPlatform && matchesType;
+    const matchesTopic = filterTopic === 'all' || (video.topic_ids || []).includes(filterTopic);
+    const matchesCompetency = filterCompetency === 'all' || (video.competency_ids || []).includes(filterCompetency);
+    return matchesSearch && matchesPlatform && matchesType && matchesTopic && matchesCompetency;
   });
 
   const getPlatformBadgeColor = (platform: string) => {
@@ -341,7 +388,7 @@ const VideoLibrary: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
             <input
@@ -378,6 +425,32 @@ const VideoLibrary: React.FC = () => {
             <option value="feedback">Feedback</option>
             <option value="transition">Transition</option>
             <option value="supplementary">Supplementary</option>
+          </select>
+
+          <select
+            value={filterTopic}
+            onChange={(e) => setFilterTopic(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="all">All Topics</option>
+            {topics.map((topic) => (
+              <option key={topic.id} value={topic.id}>
+                {topic.title}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={filterCompetency}
+            onChange={(e) => setFilterCompetency(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="all">All Competencies</option>
+            {competencies.map((comp) => (
+              <option key={comp.id} value={comp.id}>
+                {comp.code} - {comp.name}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -436,6 +509,16 @@ const VideoLibrary: React.FC = () => {
                   )}
                 </div>
                 <div>Updated: {new Date(video.updated_at).toLocaleDateString()} at {new Date(video.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                {(video.avg_engagement_score || video.avg_completion_rate) && (
+                  <div className="flex items-center gap-3">
+                    {video.avg_engagement_score !== undefined && (
+                      <span>Engagement: {video.avg_engagement_score.toFixed(0)}%</span>
+                    )}
+                    {video.avg_completion_rate !== undefined && (
+                      <span>Completion: {video.avg_completion_rate.toFixed(0)}%</span>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-2">
@@ -526,6 +609,46 @@ const VideoLibrary: React.FC = () => {
                   onChange={setVideoInput}
                   videoType={formData.video_type as any}
                 />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Topics</label>
+                  <select
+                    multiple
+                    value={formData.topic_ids}
+                    onChange={(e) => {
+                      const selected = Array.from(e.target.selectedOptions).map((opt) => opt.value);
+                      setFormData({ ...formData, topic_ids: selected });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {topics.map((topic) => (
+                      <option key={topic.id} value={topic.id}>
+                        {topic.title}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">Hold Cmd/Ctrl to select multiple topics.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Competencies</label>
+                  <select
+                    multiple
+                    value={formData.competency_ids}
+                    onChange={(e) => {
+                      const selected = Array.from(e.target.selectedOptions).map((opt) => opt.value);
+                      setFormData({ ...formData, competency_ids: selected });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {competencies.map((comp) => (
+                      <option key={comp.id} value={comp.id}>
+                        {comp.code} - {comp.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">Hold Cmd/Ctrl to select multiple competencies.</p>
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">

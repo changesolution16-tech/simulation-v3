@@ -2,10 +2,15 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronRight, PlayCircle } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import VideoPlayer from './VideoPlayer';
 
 interface TransitionPageProps {
   videoUrl?: string;
+  videoLibraryId?: string;
+  simulationInstanceId?: string;
+  scenarioId?: string;
+  optionId?: string;
   message?: string;
   isLastScenario?: boolean;
   onContinue: () => void;
@@ -13,6 +18,10 @@ interface TransitionPageProps {
 
 const TransitionPage: React.FC<TransitionPageProps> = ({
   videoUrl,
+  videoLibraryId,
+  simulationInstanceId,
+  scenarioId,
+  optionId,
   message = 'Preparing next scenario...',
   isLastScenario = false,
   onContinue
@@ -45,17 +54,18 @@ const TransitionPage: React.FC<TransitionPageProps> = ({
 
               {videoUrl && (
                 <div className="mb-8">
-                  <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                      <PlayCircle className="w-16 h-16 text-gray-400 mx-auto mb-2" />
-                      <button
-                        onClick={() => setVideoWatched(true)}
-                        className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
-                      >
-                        Mark video as watched
-                      </button>
-                    </div>
-                  </div>
+                  <VideoPlayer
+                    videoUrl={videoUrl as string}
+                    videoType="transition"
+                    videoLibraryId={videoLibraryId}
+                    simulationInstanceId={simulationInstanceId}
+                    scenarioId={scenarioId}
+                    optionId={optionId}
+                    onComplete={() => setVideoWatched(true)}
+                    onSkip={() => setVideoWatched(true)}
+                    autoPlay={false}
+                    allowSkip
+                  />
                 </div>
               )}
 

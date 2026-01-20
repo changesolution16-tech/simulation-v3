@@ -145,6 +145,7 @@ export default function SimulationIntroPage({ params }: { params: { id: string }
       displayName={simulation.display_name}
       description={simulation.description}
       videoUrl={simulation.introduction_video_url}
+      simulationInstanceId={instanceId || undefined}
       onContinue={handleContinue}
     />
   );

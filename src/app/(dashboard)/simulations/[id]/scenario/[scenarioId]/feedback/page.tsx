@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ChevronRight, Clock } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import LearningRecommendationsDisplay from '@/components/simulation/LearningRecommendationsDisplay';
+import VideoPlayer from '@/components/simulation/VideoPlayer';
 
 interface FeedbackPageProps {}
 
@@ -155,7 +156,54 @@ export default function FeedbackPage({}: FeedbackPageProps) {
     selectedOption.feedback_advanced ||
     selectedOption.feedback_text ||
     'No feedback available';
-  const hasFeedbackVideo = selectedOption.feedback_video_url;
+  const feedbackVideoUrl = (() => {
+    if (difficulty === 'advanced') {
+      return (
+        selectedOption.feedback_video_url_advanced ||
+        selectedOption.feedback_video_url_intermediate ||
+        selectedOption.feedback_video_url_beginner ||
+        selectedOption.feedback_video_url
+      );
+    }
+    if (difficulty === 'intermediate') {
+      return (
+        selectedOption.feedback_video_url_intermediate ||
+        selectedOption.feedback_video_url_beginner ||
+        selectedOption.feedback_video_url_advanced ||
+        selectedOption.feedback_video_url
+      );
+    }
+    return (
+      selectedOption.feedback_video_url_beginner ||
+      selectedOption.feedback_video_url_intermediate ||
+      selectedOption.feedback_video_url_advanced ||
+      selectedOption.feedback_video_url
+    );
+  })();
+
+  const feedbackVideoLibraryId = (() => {
+    if (difficulty === 'advanced') {
+      return (
+        selectedOption.feedback_video_library_id_advanced ||
+        selectedOption.feedback_video_library_id_intermediate ||
+        selectedOption.feedback_video_library_id_beginner
+      );
+    }
+    if (difficulty === 'intermediate') {
+      return (
+        selectedOption.feedback_video_library_id_intermediate ||
+        selectedOption.feedback_video_library_id_beginner ||
+        selectedOption.feedback_video_library_id_advanced
+      );
+    }
+    return (
+      selectedOption.feedback_video_library_id_beginner ||
+      selectedOption.feedback_video_library_id_intermediate ||
+      selectedOption.feedback_video_library_id_advanced
+    );
+  })();
+
+  const hasFeedbackVideo = !!feedbackVideoUrl;
   const canContinue = !hasFeedbackVideo || videoWatched;
 
   return (
@@ -212,21 +260,18 @@ export default function FeedbackPage({}: FeedbackPageProps) {
             {hasFeedbackVideo ? (
               <div className="mb-6">
                 {/* Video Player Component */}
-                <div className="bg-gray-900 rounded-xl overflow-hidden">
-                  <video
-                    src={selectedOption.feedback_video_url}
-                    controls
-                    autoPlay
-                    onEnded={handleVideoComplete}
-                    className="w-full"
-                  />
-                </div>
-                <button
-                  onClick={handleVideoSkip}
-                  className="mt-4 text-sm text-gray-600 hover:text-blue-600"
-                >
-                  Skip video
-                </button>
+                <VideoPlayer
+                  videoUrl={feedbackVideoUrl as string}
+                  videoType="feedback"
+                  videoLibraryId={feedbackVideoLibraryId}
+                  simulationInstanceId={instanceId || undefined}
+                  scenarioId={scenarioId}
+                  optionId={selectedOption.id}
+                  onComplete={handleVideoComplete}
+                  onSkip={handleVideoSkip}
+                  autoPlay
+                  allowSkip
+                />
               </div>
             ) : (
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6">

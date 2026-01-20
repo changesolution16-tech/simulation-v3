@@ -15,6 +15,50 @@ const detectPlatform = (url: string) => {
   return 'custom';
 };
 
+const normalizeTags = (input: unknown): string[] => {
+  if (Array.isArray(input)) {
+    return input.map(tag => String(tag).trim()).filter(Boolean);
+  }
+  if (typeof input === 'string') {
+    const trimmed = input.trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return Array.isArray(parsed)
+          ? parsed.map(tag => String(tag).trim()).filter(Boolean)
+          : [];
+      } catch {
+        return [];
+      }
+    }
+    return trimmed.split(',').map(tag => tag.trim()).filter(Boolean);
+  }
+  return [];
+};
+
+const normalizeIdArray = (input: unknown): string[] => {
+  if (Array.isArray(input)) {
+    return input.map(id => String(id).trim()).filter(Boolean);
+  }
+  if (typeof input === 'string') {
+    const trimmed = input.trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return Array.isArray(parsed)
+          ? parsed.map(id => String(id).trim()).filter(Boolean)
+          : [];
+      } catch {
+        return [];
+      }
+    }
+    return trimmed.split(',').map(id => id.trim()).filter(Boolean);
+  }
+  return [];
+};
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -41,6 +85,8 @@ export async function PATCH(
       'video_type',
       'video_file_id',
       'tags',
+      'topic_ids',
+      'competency_ids',
       'is_public',
       'difficulty',
       'thumbnail_url',
@@ -49,9 +95,21 @@ export async function PATCH(
 
     const updates: Record<string, any> = { updated_at: new Date() };
 
+    const normalizedTags = normalizeTags(body.tags);
+    const normalizedTopicIds = normalizeIdArray(body.topic_ids);
+    const normalizedCompetencyIds = normalizeIdArray(body.competency_ids);
+
     Object.entries(body).forEach(([key, value]) => {
       if (allowedFields.includes(key)) {
-        updates[key] = key === 'tags' ? JSON.stringify(value || []) : value;
+        if (key === 'tags') {
+          updates[key] = normalizedTags;
+        } else if (key === 'topic_ids') {
+          updates[key] = normalizedTopicIds;
+        } else if (key === 'competency_ids') {
+          updates[key] = normalizedCompetencyIds;
+        } else {
+          updates[key] = value;
+        }
       }
     });
 

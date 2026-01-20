@@ -3,12 +3,14 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PlayCircle } from 'lucide-react';
+import VideoPlayer from './VideoPlayer';
 
 interface SimulationIntroductionProps {
   title: string;
   description?: string;
   videoUrl?: string;
   displayName: string;
+  simulationInstanceId?: string;
   onContinue: () => void;
 }
 
@@ -17,6 +19,7 @@ const SimulationIntroduction: React.FC<SimulationIntroductionProps> = ({
   description,
   videoUrl,
   displayName,
+  simulationInstanceId,
   onContinue
 }) => {
   const [videoWatched, setVideoWatched] = useState(false);
@@ -48,37 +51,15 @@ const SimulationIntroduction: React.FC<SimulationIntroductionProps> = ({
 
             {videoUrl && (
               <div className="mb-8">
-                {videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be') ? (
-                  <div className="aspect-video rounded-lg overflow-hidden">
-                    <iframe
-                      src={videoUrl.includes('youtube.com/embed/')
-                        ? videoUrl
-                        : videoUrl.replace('watch?v=', 'embed/')}
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      onLoad={() => {
-                        setTimeout(() => setVideoWatched(true), 5000);
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="aspect-video rounded-lg overflow-hidden">
-                    <video
-                      src={videoUrl}
-                      controls
-                      autoPlay
-                      onEnded={() => setVideoWatched(true)}
-                      className="w-full h-full"
-                    />
-                  </div>
-                )}
-                <button
-                  onClick={() => setVideoWatched(true)}
-                  className="mt-2 text-sm text-blue-600 hover:text-blue-700"
-                >
-                  Skip video
-                </button>
+                <VideoPlayer
+                  videoUrl={videoUrl}
+                  videoType="introduction"
+                  simulationInstanceId={simulationInstanceId}
+                  onComplete={() => setVideoWatched(true)}
+                  onSkip={() => setVideoWatched(true)}
+                  autoPlay={false}
+                  allowSkip
+                />
               </div>
             )}
 

@@ -15,6 +15,50 @@ const detectPlatform = (url: string) => {
   return 'custom';
 };
 
+const normalizeTags = (input: unknown): string[] => {
+  if (Array.isArray(input)) {
+    return input.map(tag => String(tag).trim()).filter(Boolean);
+  }
+  if (typeof input === 'string') {
+    const trimmed = input.trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return Array.isArray(parsed)
+          ? parsed.map(tag => String(tag).trim()).filter(Boolean)
+          : [];
+      } catch {
+        return [];
+      }
+    }
+    return trimmed.split(',').map(tag => tag.trim()).filter(Boolean);
+  }
+  return [];
+};
+
+const normalizeIdArray = (input: unknown): string[] => {
+  if (Array.isArray(input)) {
+    return input.map(id => String(id).trim()).filter(Boolean);
+  }
+  if (typeof input === 'string') {
+    const trimmed = input.trim();
+    if (!trimmed) return [];
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return Array.isArray(parsed)
+          ? parsed.map(id => String(id).trim()).filter(Boolean)
+          : [];
+      } catch {
+        return [];
+      }
+    }
+    return trimmed.split(',').map(id => id.trim()).filter(Boolean);
+  }
+  return [];
+};
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -24,10 +68,12 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const platform = searchParams.get('platform');
-    const videoType = searchParams.get('videoType');
+    const videoType = searchParams.get('videoType') || searchParams.get('type');
     const difficulty = searchParams.get('difficulty');
     const searchTerm = searchParams.get('searchTerm');
     const isPublic = searchParams.get('isPublic');
+    const topicId = searchParams.get('topic') || searchParams.get('topicId');
+    const competencyId = searchParams.get('competencyId');
     const limit = searchParams.get('limit');
     const offset = searchParams.get('offset');
 
@@ -44,6 +90,8 @@ export async function GET(req: NextRequest) {
         thumbnail_url,
         duration_seconds,
         tags,
+        topic_ids,
+        competency_ids,
         usage_count,
         difficulty,
         is_public,
@@ -64,7 +112,17 @@ export async function GET(req: NextRequest) {
       ${offset ? sql`OFFSET ${Number(offset)}` : sql``}
     `;
 
-    return NextResponse.json(rows || []);
+    let result = rows || [];
+
+    if (topicId) {
+      result = result.filter((video: any) => (video.topic_ids || []).includes(topicId));
+    }
+
+    if (competencyId) {
+      result = result.filter((video: any) => (video.competency_ids || []).includes(competencyId));
+    }
+
+    return NextResponse.json(result);
   } catch (error: any) {
     console.error('Error fetching video library:', error);
     return NextResponse.json(
@@ -94,7 +152,7 @@ export async function POST(req: NextRequest) {
       video_source,
       video_type,
       video_file_id,
-      tags = [],
+      tags,
       is_public = false,
       difficulty,
       thumbnail_url
@@ -109,6 +167,10 @@ export async function POST(req: NextRequest) {
 
     const platform = video_platform || detectPlatform(video_url);
 
+    const normalizedTags = normalizeTags(tags);
+    const normalizedTopicIds = normalizeIdArray(body.topic_ids);
+    const normalizedCompetencyIds = normalizeIdArray(body.competency_ids);
+
     const [video] = await sql`
       INSERT INTO video_library (
         title,
@@ -119,6 +181,8 @@ export async function POST(req: NextRequest) {
         video_type,
         video_file_id,
         tags,
+        topic_ids,
+        competency_ids,
         is_public,
         difficulty,
         thumbnail_url,
@@ -134,7 +198,9 @@ export async function POST(req: NextRequest) {
         ${video_source || 'url'},
         ${video_type},
         ${video_file_id || null},
-        ${JSON.stringify(tags)},
+        ${normalizedTags},
+        ${normalizedTopicIds},
+        ${normalizedCompetencyIds},
         ${is_public},
         ${difficulty || 'all'},
         ${thumbnail_url || null},

@@ -125,6 +125,12 @@ export default function SimulationTransitionPage({
   return (
     <TransitionPage
       videoUrl={transitionVideoUrl}
+      videoLibraryId={
+        selectedOption?.transition_video_library_id || scenario.transition_video_library_id
+      }
+      simulationInstanceId={instanceId || undefined}
+      scenarioId={scenarioId}
+      optionId={selectedOption?.id}
       message={
         isLastScenario
           ? 'You have completed all scenarios in this simulation'

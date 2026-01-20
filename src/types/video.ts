@@ -46,6 +46,8 @@ export interface VideoLibraryItem {
   thumbnail_url?: string;
   duration_seconds?: number;
   tags: string[];
+  topic_ids?: string[];
+  competency_ids?: string[];
   usage_count: number;
   difficulty?: string;
   is_public: boolean;

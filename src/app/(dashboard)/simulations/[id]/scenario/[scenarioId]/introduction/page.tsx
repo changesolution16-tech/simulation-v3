@@ -172,6 +172,9 @@ export default function ScenarioIntroductionPage({
               <VideoPlayer
                 videoUrl={introVideoUrl}
                 videoType="introduction"
+                simulationInstanceId={instanceId || undefined}
+                scenarioId={scenarioId}
+                videoLibraryId={scenarioData.introduction_video_library_id}
                 onComplete={handleVideoComplete}
                 onSkip={handleVideoSkip}
                 autoPlay={true}
