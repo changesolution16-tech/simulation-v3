@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { X, Plus, Save, Video } from 'lucide-react';
 import TabNavigation, { Tab } from './TabNavigation';
 import ScenarioMetricSelector from './ScenarioMetricSelector';
+import AutoMappingPreview from './AutoMappingPreview';
+import type { CompetencySuggestion } from '@/lib/autoMapping';
 import OptionAccordion, { OptionAccordionData } from './OptionAccordion';
 import VideoInputSelector from '../video/VideoInputSelector';
 import HierarchyLevelSelector from './HierarchyLevelSelector';
@@ -67,6 +69,9 @@ const ScenarioCreationModal: React.FC<ScenarioCreationModalProps> = ({
   });
 
   const [selectedMetricIds, setSelectedMetricIds] = useState<string[]>([]);
+  const [selectedCompetencyIds, setSelectedCompetencyIds] = useState<string[]>([]);
+  const [acceptedSuggestions, setAcceptedSuggestions] = useState<CompetencySuggestion[]>([]);
+  const [showAutoMapping, setShowAutoMapping] = useState(false);
   const [introductionVideo, setIntroductionVideo] = useState<VideoInput>({ source: 'url' });
   const [promptVideo, setPromptVideo] = useState<VideoInput>({ source: 'url' });
   const [transitionVideo, setTransitionVideo] = useState<VideoInput>({ source: 'url' });
@@ -307,6 +312,24 @@ const ScenarioCreationModal: React.FC<ScenarioCreationModalProps> = ({
     }
   };
 
+  const saveTargetedCompetencies = async (scenarioId: string) => {
+    if (acceptedSuggestions.length === 0) return;
+
+    await fetch(`/api/scenarios/${scenarioId}/competencies`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(
+        acceptedSuggestions.map((suggestion) => ({
+          competency_id: suggestion.competency_id,
+          target_weight: suggestion.target_weight,
+          is_primary: suggestion.is_primary,
+          development_priority: suggestion.development_priority,
+          notes: suggestion.rationale
+        }))
+      )
+    });
+  };
+
   const handleSave = async () => {
     setInlineError(null);
 
@@ -317,6 +340,7 @@ const ScenarioCreationModal: React.FC<ScenarioCreationModalProps> = ({
       const scenarioId = await createScenario();
       const optionIds = await createOptions(scenarioId);
       await saveMetricScores(scenarioId, optionIds);
+      await saveTargetedCompetencies(scenarioId);
 
       onSuccess(`Scenario "${formData.title}" created successfully!`, scenarioId);
       onClose();
@@ -456,8 +480,55 @@ const ScenarioCreationModal: React.FC<ScenarioCreationModalProps> = ({
 
       <ScenarioMetricSelector
         selectedMetricIds={selectedMetricIds}
-        onMetricsChange={setSelectedMetricIds}
+        onMetricsChange={(ids) => {
+          setSelectedMetricIds(ids);
+          if (ids.length > 0 && !showAutoMapping) {
+            setShowAutoMapping(true);
+          }
+        }}
       />
+
+      {selectedMetricIds.length > 0 && showAutoMapping && (
+        <div className="border-t pt-4">
+          <AutoMappingPreview
+            metricIds={selectedMetricIds}
+            existingCompetencyIds={selectedCompetencyIds}
+            onAcceptSuggestions={(suggestions) => {
+              setAcceptedSuggestions(suggestions);
+              setSelectedCompetencyIds(suggestions.map((s) => s.competency_id));
+              setShowAutoMapping(false);
+            }}
+            onRejectSuggestions={() => {
+              setShowAutoMapping(false);
+            }}
+            showCompetencySuggestions
+            showMappingPreview={false}
+          />
+        </div>
+      )}
+
+      {acceptedSuggestions.length > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <h4 className="text-sm font-semibold text-green-900 mb-2">
+            ✓ {acceptedSuggestions.length} Competenc
+            {acceptedSuggestions.length === 1 ? 'y' : 'ies'} Selected
+          </h4>
+          <div className="space-y-1">
+            {acceptedSuggestions.map((suggestion) => (
+              <div key={suggestion.competency_id} className="text-xs text-green-800">
+                • {suggestion.competency_code} - {suggestion.competency_name} (
+                {suggestion.confidence} confidence)
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setShowAutoMapping(true)}
+            className="mt-2 text-xs text-green-700 hover:text-green-900 font-medium"
+          >
+            Review and modify selections
+          </button>
+        </div>
+      )}
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
