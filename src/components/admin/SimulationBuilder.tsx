@@ -11,6 +11,7 @@ import ImageUpload from './ImageUpload';
 import TabNavigation, { Tab } from './TabNavigation';
 import ScenarioFlowBuilder from './ScenarioFlowBuilder';
 import CompetencyWeightMatrixEditor from './CompetencyWeightMatrixEditor';
+import MetricCompetencyMappingManager from './MetricCompetencyMappingManager';
 import type { VideoInput } from '@/types';
 
 interface SimulationBuilderProps {
@@ -724,8 +725,11 @@ const MetricsStep = ({ simulationId }: any) => (
         </p>
       </div>
     ) : (
-      <div className="space-y-6">
+      <div className="space-y-8">
         <CompetencyWeightMatrixEditor simulationId={simulationId} showInheritanceInfo readOnly={false} />
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+          <MetricCompetencyMappingManager simulationId={simulationId} />
+        </div>
       </div>
     )}
   </div>

@@ -89,4 +89,32 @@ export class MetricCompetencyMappingService {
       return null;
     }
   }
+
+  static async updateMapping(
+    id: string,
+    updates: Partial<SimulationMetricCompetencyMapping>
+  ): Promise<boolean> {
+    try {
+      const response = await fetch(`/api/mappings/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Error updating mapping:', error);
+      return false;
+    }
+  }
+
+  static async deleteMapping(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`/api/mappings/${id}`, { method: 'DELETE' });
+      return response.ok;
+    } catch (error) {
+      console.error('Error deleting mapping:', error);
+      return false;
+    }
+  }
 }
