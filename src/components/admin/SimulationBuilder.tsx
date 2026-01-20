@@ -10,6 +10,7 @@ import VideoInputSelector from '../video/VideoInputSelector';
 import ImageUpload from './ImageUpload';
 import TabNavigation, { Tab } from './TabNavigation';
 import ScenarioFlowBuilder from './ScenarioFlowBuilder';
+import CompetencyWeightMatrixEditor from './CompetencyWeightMatrixEditor';
 import type { VideoInput } from '@/types';
 
 interface SimulationBuilderProps {
@@ -723,16 +724,8 @@ const MetricsStep = ({ simulationId }: any) => (
         </p>
       </div>
     ) : (
-      <div className="p-6 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Metrics and competency configuration will be available here. You'll be able to:
-        </p>
-        <ul className="mt-3 space-y-1 text-sm text-gray-600 dark:text-gray-400">
-          <li>• Select assessment metrics</li>
-          <li>• Map metrics to competencies</li>
-          <li>• Set competency weight matrix</li>
-          <li>• Configure auto-mapping</li>
-        </ul>
+      <div className="space-y-6">
+        <CompetencyWeightMatrixEditor simulationId={simulationId} showInheritanceInfo readOnly={false} />
       </div>
     )}
   </div>
