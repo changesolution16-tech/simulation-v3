@@ -23,16 +23,21 @@ export async function GET(req: NextRequest) {
     const result = await sql`
       SELECT
         id,
+        code,
         name,
         description,
+        parent_competency_id,
         competency_level,
         category,
+        industry_standard,
         tags,
         proficiency_levels,
+        is_active,
         created_at,
         updated_at
       FROM competencies
       WHERE 1=1
+        AND is_active = true
         ${level ? sql`AND competency_level = ${parseInt(level)}` : sql``}
         ${category ? sql`AND category = ${category}` : sql``}
       ORDER BY competency_level, name
@@ -65,39 +70,50 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const {
+      code,
       name,
       description,
+      parent_competency_id,
       competency_level = 1,
       category,
+      industry_standard,
       tags = [],
       proficiency_levels = []
     } = body;
 
-    if (!name || !description) {
+    if (!code || !name || !description) {
       return NextResponse.json(
-        { error: 'Name and description are required' },
+        { error: 'Code, name, and description are required' },
         { status: 400 }
       );
     }
 
     const result = await sql`
       INSERT INTO competencies (
+        code,
         name,
         description,
+        parent_competency_id,
         competency_level,
         category,
+        industry_standard,
         tags,
         proficiency_levels,
+        is_active,
         created_at,
         updated_at
       )
       VALUES (
+        ${code},
         ${name},
         ${description},
+        ${parent_competency_id || null},
         ${competency_level},
         ${category},
+        ${industry_standard || null},
         ${JSON.stringify(tags)},
         ${JSON.stringify(proficiency_levels)},
+        true,
         NOW(),
         NOW()
       )

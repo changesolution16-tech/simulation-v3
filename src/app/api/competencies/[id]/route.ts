@@ -22,7 +22,22 @@ export async function GET(
     const { id: competencyId } = await params;
 
     const result = await sql`
-      SELECT * FROM competencies WHERE id = ${competencyId}
+      SELECT
+        id,
+        code,
+        name,
+        description,
+        parent_competency_id,
+        competency_level,
+        category,
+        industry_standard,
+        tags,
+        proficiency_levels,
+        is_active,
+        created_at,
+        updated_at
+      FROM competencies
+      WHERE id = ${competencyId}
     `;
 
     if (result.length === 0) {
@@ -63,12 +78,16 @@ export async function PATCH(
     const updates: Record<string, any> = { updated_at: new Date() };
 
     const allowedFields = [
+      'code',
       'name',
       'description',
+      'parent_competency_id',
       'competency_level',
       'category',
+      'industry_standard',
       'tags',
-      'proficiency_levels'
+      'proficiency_levels',
+      'is_active'
     ];
 
     Object.entries(body).forEach(([key, value]) => {
@@ -127,7 +146,10 @@ export async function DELETE(
     const { id: competencyId } = await params;
 
     const result = await sql`
-      DELETE FROM competencies WHERE id = ${competencyId} RETURNING id
+      UPDATE competencies
+      SET is_active = false, updated_at = NOW()
+      WHERE id = ${competencyId}
+      RETURNING id
     `;
 
     if (result.length === 0) {
