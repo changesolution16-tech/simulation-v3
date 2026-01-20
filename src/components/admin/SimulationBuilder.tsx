@@ -39,6 +39,7 @@ interface SimulationFormData {
   category_id: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   estimated_duration_minutes: number;
+  status: 'draft' | 'published';
 
   landing_page_enabled: boolean;
   landing_intro_video: VideoInput | null;
@@ -87,6 +88,7 @@ const SimulationBuilder: React.FC<SimulationBuilderProps> = ({
     category_id: categoryId || '',
     difficulty: 'beginner',
     estimated_duration_minutes: 30,
+    status: 'draft',
 
     landing_page_enabled: true,
     landing_intro_video: null,
@@ -152,6 +154,7 @@ const SimulationBuilder: React.FC<SimulationBuilderProps> = ({
           category_id: simulation.category_id || '',
           difficulty: simulation.difficulty,
           estimated_duration_minutes: simulation.estimated_duration_minutes,
+          status: simulation.status || 'draft',
 
           landing_page_enabled: simulation.landing_page_enabled,
           landing_intro_video: simulation.landing_intro_video || null,
@@ -500,6 +503,20 @@ const BasicInfoStep = ({ formData, setFormData, categories }: any) => (
               <option value="advanced">Advanced</option>
             </select>
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Status
+          </label>
+          <select
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value as 'draft' | 'published' })}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
         </div>
 
         <div>
@@ -859,6 +876,10 @@ const ReviewStep = ({ formData }: any) => (
           <div className="flex justify-between">
             <dt className="text-gray-600 dark:text-gray-400">Duration:</dt>
             <dd className="text-gray-900 dark:text-white">{formData.estimated_duration_minutes} min</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-gray-600 dark:text-gray-400">Status:</dt>
+            <dd className="text-gray-900 dark:text-white capitalize">{formData.status}</dd>
           </div>
         </dl>
       </div>
