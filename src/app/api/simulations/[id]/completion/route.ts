@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { query } from '@/lib/db';
+import sql from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,12 +17,11 @@ export async function GET(
       );
     }
 
-    const simulationId = params.id;
+    const { id: simulationId } = await params;
     const learnerId = session.user.id;
 
-    // Get the most recent completed instance
-    const instanceResult = await query(
-      `SELECT
+    const instanceResult = await sql`
+      SELECT
         id,
         final_score,
         bravin_overall_score,
@@ -33,26 +32,24 @@ export async function GET(
         completed_at,
         is_best_attempt
       FROM simulation_instances
-      WHERE learner_id = $1
-        AND simulation_id = $2
+      WHERE user_id = ${learnerId}
+        AND simulation_id = ${simulationId}
         AND status = 'completed'
       ORDER BY completed_at DESC
-      LIMIT 1`,
-      [learnerId, simulationId]
-    );
+      LIMIT 1
+    `;
 
-    if (instanceResult.rows.length === 0) {
+    if (instanceResult.length === 0) {
       return NextResponse.json(
         { error: 'No completed simulation found' },
         { status: 404 }
       );
     }
 
-    const instance = instanceResult.rows[0];
+    const instance = instanceResult[0];
 
-    // Get top 3 competencies for this learner
-    const competenciesResult = await query(
-      `SELECT
+    const competenciesResult = await sql`
+      SELECT
         c.name,
         lc.score,
         lc.previous_score,
@@ -63,13 +60,11 @@ export async function GET(
         END as improvement
       FROM learner_competencies lc
       JOIN competencies c ON c.id = lc.competency_id
-      WHERE lc.learner_id = $1
+      WHERE lc.learner_id = ${learnerId}
       ORDER BY lc.score DESC, improvement DESC
-      LIMIT 3`,
-      [learnerId]
-    );
+      LIMIT 3
+    `;
 
-    // Format response
     const response = {
       stats: {
         final_score: instance.final_score || 0,
@@ -77,7 +72,7 @@ export async function GET(
         decisions_made: instance.decisions_made || 0,
         scenarios_completed: instance.scenarios_completed || 0
       },
-      top_competencies: competenciesResult.rows.map(row => ({
+      top_competencies: competenciesResult.map((row: any) => ({
         name: row.name,
         score: parseFloat(row.score || 0),
         improvement: parseFloat(row.improvement || 0)

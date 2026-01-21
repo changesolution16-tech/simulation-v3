@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { query } from '@/lib/db';
+import sql from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,12 +17,11 @@ export async function GET(
       );
     }
 
-    const simulationId = params.id;
+    const { id: simulationId } = await params;
     const learnerId = session.user.id;
 
-    // Get all completed attempts for this simulation
-    const attemptsResult = await query(
-      `SELECT
+    const attemptsResult = await sql`
+      SELECT
         id as instance_id,
         attempt_number,
         final_score,
@@ -36,29 +35,26 @@ export async function GET(
         is_best_attempt,
         status
       FROM simulation_instances
-      WHERE learner_id = $1
-        AND simulation_id = $2
+      WHERE user_id = ${learnerId}
+        AND simulation_id = ${simulationId}
         AND status = 'completed'
-      ORDER BY attempt_number DESC`,
-      [learnerId, simulationId]
-    );
+      ORDER BY attempt_number DESC
+    `;
 
-    // Get aggregated statistics
-    const statsResult = await query(
-      `SELECT
+    const statsResult = await sql`
+      SELECT
         COUNT(*) as total_attempts,
         MAX(final_score) as best_score,
         AVG(final_score) as average_score,
         MIN(total_decision_time_seconds) as fastest_time,
         AVG(total_decision_time_seconds) as average_time
       FROM simulation_instances
-      WHERE learner_id = $1
-        AND simulation_id = $2
-        AND status = 'completed'`,
-      [learnerId, simulationId]
-    );
+      WHERE user_id = ${learnerId}
+        AND simulation_id = ${simulationId}
+        AND status = 'completed'
+    `;
 
-    const attempts = attemptsResult.rows.map(row => ({
+    const attempts = attemptsResult.map((row: any) => ({
       instance_id: row.instance_id,
       attempt_number: row.attempt_number || 1,
       final_score: parseFloat(row.final_score || 0),
@@ -73,7 +69,7 @@ export async function GET(
       status: row.status
     }));
 
-    const stats = statsResult.rows[0] || {};
+    const stats = statsResult[0] || {};
 
     const response = {
       attempts,
