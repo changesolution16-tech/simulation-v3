@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Dashboard from '@/components/dashboard/Dashboard';
 import LearnerDashboard from '@/components/learner/LearnerDashboard';
+import InstructorDashboard from '@/components/instructor/InstructorDashboard';
 import { normalizeRole } from '@/lib/roles';
 
 export default function DashboardPage() {
@@ -34,13 +35,23 @@ export default function DashboardPage() {
     return null;
   }
 
-  const isLearner = normalizeRole(session.user.role) === 'learner';
+  const normalizedRole = normalizeRole(session.user.role);
+  const isLearner = normalizedRole === 'learner';
+  const isInstructor = normalizedRole === 'instructor';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {isLearner ? <LearnerDashboard /> : <Dashboard />}
-      </div>
+      {isLearner ? (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <LearnerDashboard />
+        </div>
+      ) : isInstructor ? (
+        <InstructorDashboard />
+      ) : (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Dashboard />
+        </div>
+      )}
     </div>
   );
 }

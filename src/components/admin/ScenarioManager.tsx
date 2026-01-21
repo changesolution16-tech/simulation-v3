@@ -18,7 +18,7 @@ interface Scenario {
 }
 
 interface ScenarioManagerProps {
-  simulationId: string;
+  simulationId?: string;
 }
 
 export default function ScenarioManager({ simulationId }: ScenarioManagerProps) {
@@ -34,7 +34,9 @@ export default function ScenarioManager({ simulationId }: ScenarioManagerProps) 
   const loadScenarios = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/simulations/${simulationId}/scenarios`);
+      const response = await fetch(
+        simulationId ? `/api/simulations/${simulationId}/scenarios` : '/api/scenarios'
+      );
       if (response.ok) {
         const data = await response.json();
         setScenarios(data);

@@ -50,12 +50,17 @@ export async function GET(
         WHERE cohort_id = ${assignment.cohort_id} AND learner_id = ${session.user.id}
       `;
 
-      if (memberCheck.length === 0) {
+      const assignmentMemberCheck = await sql`
+        SELECT 1 FROM assignment_learners
+        WHERE assignment_id = ${assignmentId} AND learner_id = ${session.user.id}
+      `;
+
+      if (memberCheck.length === 0 && assignmentMemberCheck.length === 0) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     } else if (session.user.role === 'instructor') {
       // Check if instructor owns the assignment
-      if (assignment.instructor_id !== session.user.id) {
+      if (assignment.instructor_id !== session.user.id && assignment.created_by !== session.user.id) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     }
@@ -97,7 +102,7 @@ export async function PATCH(
     // Check ownership if instructor
     if (session.user.role === 'instructor') {
       const ownerCheck = await sql`
-        SELECT instructor_id FROM training_assignments WHERE id = ${assignmentId}
+        SELECT instructor_id, created_by FROM training_assignments WHERE id = ${assignmentId}
       `;
 
       if (ownerCheck.length === 0) {
@@ -112,11 +117,16 @@ export async function PATCH(
     const updates: Record<string, any> = { updated_at: new Date() };
 
     const allowedFields = [
+      'title',
+      'description',
+      'start_date',
+      'end_date',
       'due_date',
       'instructions',
       'max_attempts',
       'passing_score',
       'is_required',
+      'is_published',
       'status'
     ];
 
@@ -177,17 +187,21 @@ export async function DELETE(
     // Check ownership if instructor
     if (session.user.role === 'instructor') {
       const ownerCheck = await sql`
-        SELECT instructor_id FROM training_assignments WHERE id = ${assignmentId}
+        SELECT instructor_id, created_by FROM training_assignments WHERE id = ${assignmentId}
       `;
 
       if (ownerCheck.length === 0) {
         return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
       }
 
-      if (ownerCheck[0].instructor_id !== session.user.id) {
+      if (ownerCheck[0].instructor_id !== session.user.id && ownerCheck[0].created_by !== session.user.id) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     }
+
+    await sql`
+      DELETE FROM assignment_learners WHERE assignment_id = ${assignmentId}
+    `;
 
     const result = await sql`
       DELETE FROM training_assignments WHERE id = ${assignmentId} RETURNING id

@@ -111,11 +111,12 @@ const ScenarioEditModal: React.FC<ScenarioEditModalProps> = ({
   };
 
   const toVideoInput = (data: any): VideoInput | null => {
-    if (!data?.url && !data?.file_id && !data?.source) return null;
+    if (!data?.url && !data?.file_id && !data?.source && !data?.library_id) return null;
     return {
-      source: data.source || 'url',
+      source: data.source || (data.library_id ? 'library' : 'url'),
       url: data.url || undefined,
-      fileId: data.file_id || undefined
+      fileId: data.file_id || undefined,
+      libraryId: data.library_id || undefined
     };
   };
 
@@ -149,19 +150,22 @@ const ScenarioEditModal: React.FC<ScenarioEditModalProps> = ({
       setIntroductionVideo(toVideoInput({
         url: scenario.introduction_video_url,
         source: scenario.introduction_video_source,
-        file_id: scenario.introduction_video_file_id
+        file_id: scenario.introduction_video_file_id,
+        library_id: scenario.introduction_video_library_id
       }) || { source: 'url' });
 
       setPromptVideo(toVideoInput({
         url: scenario.prompt_video_url,
         source: scenario.prompt_video_source,
-        file_id: scenario.prompt_video_file_id
+        file_id: scenario.prompt_video_file_id,
+        library_id: scenario.prompt_video_library_id
       }) || { source: 'url' });
 
       setTransitionVideo(toVideoInput({
         url: scenario.transition_video_url,
         source: scenario.transition_video_source,
-        file_id: scenario.transition_video_file_id
+        file_id: scenario.transition_video_file_id,
+        library_id: scenario.transition_video_library_id
       }) || { source: 'url' });
 
       const optionData = scenario.options || [];
@@ -180,22 +184,26 @@ const ScenarioEditModal: React.FC<ScenarioEditModalProps> = ({
             feedback_video_beginner: toVideoInput({
               url: opt.feedback_video_url_beginner,
               source: opt.feedback_video_source_beginner,
-              file_id: opt.feedback_video_file_id_beginner
+              file_id: opt.feedback_video_file_id_beginner,
+              library_id: opt.feedback_video_library_id_beginner
             }),
             feedback_video_intermediate: toVideoInput({
               url: opt.feedback_video_url_intermediate,
               source: opt.feedback_video_source_intermediate,
-              file_id: opt.feedback_video_file_id_intermediate
+              file_id: opt.feedback_video_file_id_intermediate,
+              library_id: opt.feedback_video_library_id_intermediate
             }),
             feedback_video_advanced: toVideoInput({
               url: opt.feedback_video_url_advanced,
               source: opt.feedback_video_source_advanced,
-              file_id: opt.feedback_video_file_id_advanced
+              file_id: opt.feedback_video_file_id_advanced,
+              library_id: opt.feedback_video_library_id_advanced
             }),
             transition_video: toVideoInput({
               url: opt.transition_video_url,
               source: opt.transition_video_source,
-              file_id: opt.transition_video_file_id
+              file_id: opt.transition_video_file_id,
+              library_id: opt.transition_video_library_id
             }),
             skillImpact: opt.skill_impacts || {},
             competency_impacts: opt.competency_impacts || {},
@@ -402,7 +410,8 @@ const ScenarioEditModal: React.FC<ScenarioEditModalProps> = ({
     url: input?.url || null,
     source: input?.source || null,
     fileId: input?.fileId || null,
-    embedCode: input?.embedCode || null
+    embedCode: input?.embedCode || null,
+    libraryId: input?.libraryId || null
   });
 
   const updateScenario = async () => {
@@ -416,12 +425,15 @@ const ScenarioEditModal: React.FC<ScenarioEditModalProps> = ({
       prompt_video_url: toVideoPayload(promptVideo).url,
       prompt_video_source: toVideoPayload(promptVideo).source,
       prompt_video_file_id: toVideoPayload(promptVideo).fileId,
+      prompt_video_library_id: toVideoPayload(promptVideo).libraryId,
       introduction_video_url: toVideoPayload(introductionVideo).url,
       introduction_video_source: toVideoPayload(introductionVideo).source,
       introduction_video_file_id: toVideoPayload(introductionVideo).fileId,
+      introduction_video_library_id: toVideoPayload(introductionVideo).libraryId,
       transition_video_url: toVideoPayload(transitionVideo).url,
       transition_video_source: toVideoPayload(transitionVideo).source,
       transition_video_file_id: toVideoPayload(transitionVideo).fileId,
+      transition_video_library_id: toVideoPayload(transitionVideo).libraryId,
       timer_enabled: formData.timerEnabled,
       timer_visible: formData.timerVisible,
       timer_display_location: formData.timerDisplayLocation,
@@ -464,15 +476,19 @@ const ScenarioEditModal: React.FC<ScenarioEditModalProps> = ({
             feedback_video_url_beginner: opt.feedback_video_beginner?.url || null,
             feedback_video_source_beginner: opt.feedback_video_beginner?.source || null,
             feedback_video_file_id_beginner: opt.feedback_video_beginner?.fileId || null,
+            feedback_video_library_id_beginner: opt.feedback_video_beginner?.libraryId || null,
             feedback_video_url_intermediate: opt.feedback_video_intermediate?.url || null,
             feedback_video_source_intermediate: opt.feedback_video_intermediate?.source || null,
             feedback_video_file_id_intermediate: opt.feedback_video_intermediate?.fileId || null,
+            feedback_video_library_id_intermediate: opt.feedback_video_intermediate?.libraryId || null,
             feedback_video_url_advanced: opt.feedback_video_advanced?.url || null,
             feedback_video_source_advanced: opt.feedback_video_advanced?.source || null,
             feedback_video_file_id_advanced: opt.feedback_video_advanced?.fileId || null,
+            feedback_video_library_id_advanced: opt.feedback_video_advanced?.libraryId || null,
             transition_video_url: opt.transition_video?.url || null,
             transition_video_source: opt.transition_video?.source || null,
             transition_video_file_id: opt.transition_video?.fileId || null,
+            transition_video_library_id: opt.transition_video?.libraryId || null,
             skill_impacts: opt.skillImpact || {},
             competency_impacts: opt.competency_impacts || {}
           })
@@ -497,15 +513,19 @@ const ScenarioEditModal: React.FC<ScenarioEditModalProps> = ({
             feedback_video_url_beginner: opt.feedback_video_beginner?.url || null,
             feedback_video_source_beginner: opt.feedback_video_beginner?.source || null,
             feedback_video_file_id_beginner: opt.feedback_video_beginner?.fileId || null,
+            feedback_video_library_id_beginner: opt.feedback_video_beginner?.libraryId || null,
             feedback_video_url_intermediate: opt.feedback_video_intermediate?.url || null,
             feedback_video_source_intermediate: opt.feedback_video_intermediate?.source || null,
             feedback_video_file_id_intermediate: opt.feedback_video_intermediate?.fileId || null,
+            feedback_video_library_id_intermediate: opt.feedback_video_intermediate?.libraryId || null,
             feedback_video_url_advanced: opt.feedback_video_advanced?.url || null,
             feedback_video_source_advanced: opt.feedback_video_advanced?.source || null,
             feedback_video_file_id_advanced: opt.feedback_video_advanced?.fileId || null,
+            feedback_video_library_id_advanced: opt.feedback_video_advanced?.libraryId || null,
             transition_video_url: opt.transition_video?.url || null,
             transition_video_source: opt.transition_video?.source || null,
             transition_video_file_id: opt.transition_video?.fileId || null,
+            transition_video_library_id: opt.transition_video?.libraryId || null,
             skill_impacts: opt.skillImpact || {},
             competency_impacts: opt.competency_impacts || {}
           })

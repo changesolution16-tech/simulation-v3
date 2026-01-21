@@ -128,6 +128,25 @@ const SimulationBuilder: React.FC<SimulationBuilderProps> = ({
     }
   }, [simulationId]);
 
+  const detectPlatform = (url?: string | null) => {
+    if (!url) return 'custom';
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes('synthesia.io')) return 'synthesia';
+    if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return 'youtube';
+    if (lowerUrl.includes('vimeo.com')) return 'vimeo';
+    if (lowerUrl.includes('loom.com')) return 'loom';
+    if (lowerUrl.includes('blob:') || lowerUrl.includes('supabase.co/storage')) return 'file';
+    return 'custom';
+  };
+
+  const toSimulationVideoPayload = (input: VideoInput | null) => {
+    const url = input?.url?.trim() || null;
+    return {
+      url,
+      type: detectPlatform(url)
+    };
+  };
+
   const loadCategories = async () => {
     try {
       const response = await fetch('/api/categories');
@@ -198,9 +217,27 @@ const SimulationBuilder: React.FC<SimulationBuilderProps> = ({
     setLoading(true);
 
     try {
+      const landingIntro = toSimulationVideoPayload(formData.landing_intro_video);
+      const introduction = toSimulationVideoPayload(formData.introduction_video);
+      const closingExcellent = toSimulationVideoPayload(formData.closing_video_excellent);
+      const closingGood = toSimulationVideoPayload(formData.closing_video_good);
+      const closingDeveloping = toSimulationVideoPayload(formData.closing_video_developing);
+
       const dataToSend = {
         ...formData,
-        name: formData.name || formData.display_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+        name: formData.name || formData.display_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+        landing_intro_video_url: landingIntro.url,
+        landing_intro_video_type: landingIntro.type,
+        introduction_video_url: introduction.url,
+        introduction_video_type: introduction.type,
+        closing_video_url: null,
+        closing_video_type: null,
+        closing_video_excellent_url: closingExcellent.url,
+        closing_video_excellent_type: closingExcellent.type,
+        closing_video_good_url: closingGood.url,
+        closing_video_good_type: closingGood.type,
+        closing_video_developing_url: closingDeveloping.url,
+        closing_video_developing_type: closingDeveloping.type
       };
 
       if (existingSimulation) {

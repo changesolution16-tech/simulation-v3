@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Link, FileText, Upload as UploadIcon, CheckCircle } from 'lucide-react';
+import { Link, FileText, Upload as UploadIcon, CheckCircle, Video } from 'lucide-react';
 import VideoEmbedField from './VideoEmbedField';
 import FileUpload from './FileUpload';
 import type { VideoSource, VideoFile, VideoInput } from '@/types';
 import { getVideoFilePublicUrl } from '@/lib/urlUtils';
+import VideoLibraryBrowser from './VideoLibraryBrowser';
+import type { VideoLibraryItem } from '@/types/video';
 
 interface VideoInputSelectorProps {
   label: string;
@@ -32,6 +34,7 @@ const VideoInputSelector: React.FC<VideoInputSelectorProps> = ({
   const [urlValue, setUrlValue] = useState(value?.url || '');
   const [embedCodeValue, setEmbedCodeValue] = useState(value?.embedCode || '');
   const [uploadedFile, setUploadedFile] = useState<VideoFile | null>(null);
+  const [selectedLibraryVideo, setSelectedLibraryVideo] = useState<VideoLibraryItem | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,16 +45,51 @@ const VideoInputSelector: React.FC<VideoInputSelectorProps> = ({
     }
   }, [value]);
 
+  useEffect(() => {
+    if (!value?.libraryId) return;
+    if (selectedLibraryVideo?.id === value.libraryId) return;
+
+    let cancelled = false;
+    const loadLibraryVideo = async () => {
+      try {
+        const response = await fetch(`/api/video-library/${value.libraryId}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!cancelled) {
+          setSelectedLibraryVideo(data);
+        }
+      } catch (err) {
+        console.warn('[VideoInputSelector] Failed to load library video:', err);
+      }
+    };
+
+    loadLibraryVideo();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLibraryVideo?.id, value?.libraryId]);
+
   const handleTabChange = (tab: VideoSource) => {
     setActiveTab(tab);
     setError(null);
+
+    const libraryId = selectedLibraryVideo?.id || value?.libraryId;
+    const libraryUrl = selectedLibraryVideo?.video_url || value?.url;
+    const libraryFileId = selectedLibraryVideo?.video_file_id || value?.fileId;
 
     const newInput: VideoInput = {
       source: tab,
       url: tab === 'url' ? urlValue : undefined,
       embedCode: tab === 'embed' ? embedCodeValue : undefined,
-      fileId: tab === 'upload' && uploadedFile ? uploadedFile.id : undefined
+      fileId: tab === 'upload' && uploadedFile ? uploadedFile.id : undefined,
+      libraryId: tab === 'library' ? libraryId : undefined
     };
+
+    if (tab === 'library') {
+      newInput.url = libraryUrl;
+      newInput.fileId = libraryFileId ? String(libraryFileId) : undefined;
+    }
 
     onChange(newInput);
   };
@@ -120,8 +158,24 @@ const VideoInputSelector: React.FC<VideoInputSelectorProps> = ({
       return !!embedCodeValue && activeTab === 'embed';
     } else if (tab === 'upload') {
       return !!uploadedFile && activeTab === 'upload';
+    } else if (tab === 'library') {
+      return !!selectedLibraryVideo && activeTab === 'library';
     }
     return false;
+  };
+
+  const handleLibrarySelect = (video: VideoLibraryItem) => {
+    setSelectedLibraryVideo(video);
+    setError(null);
+
+    const input: VideoInput = {
+      source: 'library',
+      libraryId: video.id,
+      url: video.video_url,
+      fileId: video.video_file_id || undefined
+    };
+
+    onChange(input);
   };
 
   return (
@@ -187,6 +241,24 @@ const VideoInputSelector: React.FC<VideoInputSelectorProps> = ({
                 <UploadIcon className="w-4 h-4" />
                 <span>Upload File</span>
                 {getInputStatus('upload') && (
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                )}
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTabChange('library')}
+              className={`relative py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'library'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Video className="w-4 h-4" />
+                <span>Video Library</span>
+                {getInputStatus('library') && (
                   <CheckCircle className="w-4 h-4 text-green-600" />
                 )}
               </div>
@@ -274,6 +346,21 @@ const VideoInputSelector: React.FC<VideoInputSelectorProps> = ({
                 <li>• You want to ensure the video won&apos;t be removed by external services</li>
               </ul>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'library' && (
+          <div className="space-y-4">
+            <VideoLibraryBrowser
+              onSelect={handleLibrarySelect}
+              selectedVideoId={selectedLibraryVideo?.id}
+              filterByType={videoType}
+            />
+            {selectedLibraryVideo && (
+              <div className="border border-green-200 bg-green-50 rounded-md p-3 text-sm text-green-900">
+                Selected: {selectedLibraryVideo.title}
+              </div>
+            )}
           </div>
         )}
       </div>
