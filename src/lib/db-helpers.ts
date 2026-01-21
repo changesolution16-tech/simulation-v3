@@ -92,7 +92,7 @@ export async function getSimulationsByCategory(categoryId?: string) {
       FROM simulations s
       LEFT JOIN simulation_categories c ON c.id = s.category_id
       LEFT JOIN simulation_instances si ON si.simulation_id = s.id
-      WHERE s.category_id = ${categoryId} AND s.is_published = true
+      WHERE s.category_id = ${categoryId} AND s.status = 'published'
       GROUP BY s.id, c.name, c.color
       ORDER BY s.created_at DESC
     `;
@@ -108,7 +108,7 @@ export async function getSimulationsByCategory(categoryId?: string) {
     FROM simulations s
     LEFT JOIN simulation_categories c ON c.id = s.category_id
     LEFT JOIN simulation_instances si ON si.simulation_id = s.id
-    WHERE s.is_published = true
+    WHERE s.status = 'published'
     GROUP BY s.id, c.name, c.color
     ORDER BY s.created_at DESC
   `;
@@ -127,6 +127,8 @@ export async function getScenariosBySimulation(simulationId: string) {
   return await sql`
     SELECT
       s.*,
+      ss.is_entry_point,
+      ss.sequence_order,
       json_agg(
         json_build_object(
           'id', so.id,
@@ -147,11 +149,12 @@ export async function getScenariosBySimulation(simulationId: string) {
           'transitionVideoUrl', so.transition_video_url
         ) ORDER BY so.option_order
       ) as options
-    FROM scenarios s
+    FROM simulation_scenarios ss
+    INNER JOIN scenarios s ON s.id = ss.scenario_id
     LEFT JOIN scenario_options so ON so.scenario_id = s.id
-    WHERE s.simulation_id = ${simulationId}
-    GROUP BY s.id
-    ORDER BY s.created_at
+    WHERE ss.simulation_id = ${simulationId}
+    GROUP BY s.id, ss.is_entry_point, ss.sequence_order
+    ORDER BY ss.sequence_order, ss.is_entry_point DESC
   `;
 }
 
